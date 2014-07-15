@@ -1,0 +1,17 @@
+{
+  "name": "puppetlabs-netdev_stdlib_eos",
+  "version": "0.1.0",
+  "author": "puppetlabs",
+  "summary": "Providers for Arista EOS",
+  "license": "Apache 2.0",
+  "source": "https://github.com/puppetlabs/puppetlabs-netdev_stdlib_eos",
+  "project_page": "https://github.com/puppetlabs/puppetlabs-netdev_stdlib_eos",
+  "issues_url": "https://github.com/puppetlabs/puppetlabs-netdev_stdlib_eos/issues",
+  "dependencies": [
+    {
+      "name": "puppetlabs-stdlib",
+      "version_range": ">= 1.0.0"
+    }
+  ]
+}
+
