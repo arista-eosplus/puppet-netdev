@@ -18,7 +18,7 @@ module PuppetX
     #   >> vlans = api.all_vlans
     #   >> vlans.keys
     #   => ['1', '3110']
-    class EosApi
+    class EosApi # rubocop:disable Style/ClassLength
       attr_reader :address, :port, :username, :password
 
       ##
@@ -99,9 +99,9 @@ module PuppetX
         cmds = ['enable', 'configure', "no vlan #{id}"]
         api_response = eapi_call(cmds)
 
-        err = api_response['error']
-        return nil unless err
-        fail Puppet::Error, "could not create vlan #{id}: #{JSON.dump(err)}"
+        return nil unless api_response['error']
+        fail Puppet::Error,
+             "could not create vlan #{id}: #{JSON.dump(api_response)}"
       end
 
       ##
@@ -113,14 +113,12 @@ module PuppetX
       #
       # @api public
       def set_vlan_name(id, name)
-        cmds = ['enable', 'configure', "vlan #{id}"]
-        cmds << "name #{name}"
+        cmds = ['enable', 'configure', "vlan #{id}"] << "name #{name}"
         api_response = eapi_call(cmds)
 
-        err = api_response['error']
-        return nil unless err
-        msg = "could not name vlan #{id} as #{name}: #{JSON.dump(err)}"
-        fail Puppet::Error, msg
+        return nil unless api_response['error']
+        fail Puppet::Error,
+             "could not name vlan #{id} as #{name}: #{JSON.dump(api_response)}"
       end
 
       ##
@@ -133,8 +131,7 @@ module PuppetX
       #
       # @api public
       def set_vlan_state(id, state)
-        cmds = ['enable', 'configure', "vlan #{id}"]
-        cmds << "state #{state}"
+        cmds = ['enable', 'configure', "vlan #{id}"] << "state #{state}"
         api_response = eapi_call(cmds)
 
         err = api_response['error']
@@ -168,9 +165,118 @@ module PuppetX
       #
       # @return [Hash<String,Hash>]
       def all_vlans
-        rval = eapi_call('show vlan')
-        result = rval['result']
+        api_response = eapi_call('show vlan')
+        result = api_response['result']
         result.first['vlans']
+      end
+
+      ##
+      # all_interfaces returns a hash of all interfaces
+      #
+      # @api public
+      #
+      # @return [Hash<String,Hash>]
+      def all_interfaces
+        api_response = eapi_call('show interfaces')
+        result = api_response['result']
+        result.first['interfaces']
+      end
+
+      ##
+      # set_interface_state enables or disables a network interface
+      #
+      # @param [String] name The interface name, e.g. 'Ethernet1'
+      #
+      # @param [String] state The interface state, e.g. 'no shutdown' or
+      #   'shutdown'
+      #
+      # @api public
+      def set_interface_state(name, state)
+        cmd = %w(enable configure) << "interface #{name}" << state
+
+        api_response = eapi_call(cmd)
+
+        return true unless api_response['error']
+        err_msg = format_error(api_response['error']['data'])
+        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+      end
+
+      ##
+      # set_interface_description configures the description string for an
+      # interface.
+      #
+      # @param [String] name The interface name, e.g. 'Ethernet1'
+      #
+      # @param [String] description The description to assign the interface.
+      #
+      # @api public
+      def set_interface_description(name, description)
+        cmd = %w(enable configure) << "interface #{name}"
+        cmd << "description #{description}"
+
+        api_response = eapi_call(cmd)
+
+        return true unless api_response['error']
+        err_msg = format_error(api_response['error']['data'])
+        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+      end
+
+      ##
+      # set_interface_speed enable a network interface
+      #
+      # @param [String] name The interface name, e.g. 'Ethernet1'
+      #
+      # @param [String] speed The interface state, e.g. '1000full' or
+      #   '40gfull'
+      #
+      # @api public
+      def set_interface_speed(name, speed)
+        cmd = %w(enable configure) << "interface #{name}"
+        cmd << "speed forced #{speed}"
+
+        api_response = eapi_call(cmd)
+        return true unless api_response['error']
+        err_msg = format_error(api_response['error']['data'])
+        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+      end
+
+      ##
+      # set_interface_mtu configures the interface MTU
+      #
+      # @param [String] name The interface name, e.g. 'Ethernet1'
+      #
+      # @param [Fixnum] mtu The interface mtu, e.g. 9000
+      #
+      # @api public
+      def set_interface_mtu(name, mtu)
+        cmd = %w(enable configure) << "interface #{name}"
+        cmd << "mtu #{mtu}"
+
+        api_response = eapi_call(cmd)
+        return true unless api_response['error']
+        err_msg = format_error(api_response['error']['data'])
+        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+      end
+
+      ##
+      # format_error takes the value of the 'error' key from the EOS API
+      # response and formats the error strings into a string suitable for error
+      # messages.
+      #
+      # @param [Array<Hash>] data Array of data from the API response, this
+      #   will be lcoated in the sub-key api_response['error']['data']
+      #
+      # @api private
+      #
+      # @return [String] the human readable error message
+      def format_error(data)
+        if data
+          data.each_with_object([]) do |i, ary|
+            ary.push(*i['errors']) if i['errors']
+          end.join(', ')
+        else
+          'unknown error'
+        end
       end
 
       ##
@@ -285,12 +391,91 @@ module PuppetX
     # EosProviderMethods is meant to be mixed into the provider to make api
     # methods available.
     module EosProviderMethods
+      ##
+      # api returns a memoized instance of the EosApi.  This method is intended
+      # to be used from providers that have mixed in the EosProviderMethods
+      # module.
+      #
+      # @return [PuppetX::NetDev::EosApi] api instance
       def api
+        ## FIXME remove the hard coded address and make this configurable.
         @api ||= PuppetX::NetDev::EosApi.new(
           address: 'dhcp150.jeff.backline.puppetlabs.net',
           port: 80,
           username: 'admin',
           password: 'puppet')
+      end
+
+      ##
+      # bandwidth_to_speed converts a raw bandwidth integer to a Link speed
+      # [10m|100m|1g|10g|40g|56g|100g]
+      #
+      # @param [Fixnum] bandwidth The bandwdith value in bytes per second
+      #
+      # @api public
+      #
+      # @return [String] Link speed [10m|100m|1g|10g|40g|56g|100g]
+      def bandwidth_to_speed(bandwidth)
+        if bandwidth >= 1_000_000_000
+          "#{(bandwidth / 1_000_000_000).to_i}g"
+        else
+          "#{(bandwidth / 1_000_000).to_i}m"
+        end
+      end
+
+      ##
+      # duplex_to_value Convert a duplex string from the API response to the
+      # provider value
+      #
+      # @param [String] duplex The value from the API response
+      #
+      # @api public
+      #
+      # @return [Symbol] the value for the provider
+      def duplex_to_value(duplex)
+        case duplex
+        when 'duplexFull' then :full
+        when 'duplexHalf' then :half
+        else fail ArgumentError, "Unknown duplex value #{duplex}"
+        end
+      end
+
+      ##
+      # interface_status_to_enable maps the interfaceStatus attribute of the
+      # API response to the enable state of :true or :false
+      #
+      # The interfaceStatus reflects realtime status so its a bit funny how it
+      # works.  If interfaceStatus == 'disabled' then the interface is
+      # administratively disabled (ie configured to be disabled) otherwise its
+      # enabled (ie no shutdown).  So in your conversion here you can just
+      # reflect if interfaceStatus == 'disabled' or not as the state.
+      #
+      # @param [String] status the value of interfaceStatus returned by the API
+      #
+      # @return [Symbol] :true or :false
+      def interface_status_to_enable(status)
+        if status == 'disabled' then :false else :true end
+      end
+
+      ##
+      # interface_attributes takes an attribute hash from the EOS API and maps
+      # the values to provider attributes for the network_interface type.
+      #
+      # @param [Hash] attr_hash Interface attribute hash
+      #
+      # @api public
+      #
+      # @return [Hash] provider attributes suitable for merge into a provider
+      #   hash that will be passed to the provider initializer.
+      def interface_attributes(attr_hash)
+        hsh = {}
+        status = attr_hash['interfaceStatus']
+        hsh[:enable]      = interface_status_to_enable(status)
+        hsh[:mtu]         = attr_hash['mtu']
+        hsh[:speed]       = bandwidth_to_speed(attr_hash['bandwidth'])
+        hsh[:duplex]      = duplex_to_value(attr_hash['duplex'])
+        hsh[:description] = attr_hash['description']
+        hsh
       end
     end
   end

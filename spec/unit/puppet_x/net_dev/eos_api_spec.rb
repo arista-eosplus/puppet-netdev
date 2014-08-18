@@ -239,6 +239,50 @@ describe PuppetX::NetDev::EosApi do
     end
   end
 
+  describe '#all_interfaces' do
+    subject { api.all_interfaces }
+
+    # Data the mock API call returns
+    let :api_response do
+      dir = File.dirname(__FILE__)
+      file = File.join(dir, 'fixture_show_interfaces.json')
+      JSON.load(File.read(file))
+    end
+
+    before do
+      allow(api).to receive(:eapi_call)
+        .with('show interfaces')
+        .and_return(api_response)
+    end
+
+    it { is_expected.not_to have_key 'results' }
+    it { is_expected.to have_key 'Management1' }
+
+    describe '#all_interfaces["Management1"]' do
+      subject { api.all_interfaces['Management1'] }
+
+      it { is_expected.to be_a_kind_of Hash }
+      it 'has an mtu of 1500' do
+        expect(subject['mtu']).to eq 1500
+      end
+      it 'is hardware ethernet' do
+        expect(subject['hardware']).to eq 'ethernet'
+      end
+      it 'has duplex of duplexFull' do
+        expect(subject['duplex']).to eq 'duplexFull'
+      end
+      it 'has bandwidth of 1000000000' do
+        expect(subject['bandwidth']).to eq 1_000_000_000
+      end
+      it 'has an interfaceAddress key with Array value' do
+        expect(subject['interfaceAddress']).to be_an Array
+      end
+      it 'has a physicalAddress of 00:42:00:6e:00:96' do
+        expect(subject['physicalAddress']).to eq '00:42:00:6e:00:96'
+      end
+    end
+  end
+
   describe '#uri' do
     subject { api.uri.to_s }
 
@@ -412,5 +456,243 @@ describe PuppetX::NetDev::EosApi do
         expect { api.set_vlan_state(3111, 'foo') }.to raise_error Puppet::Error
       end
     end
+  end
+
+  describe '#set_interface_state' do
+    context 'with valid arguments' do
+      let :api_response do
+        {
+          'jsonrpc' => '2.0',
+          'result'  => [{}, {}, {}],
+          'id'      => '7af750fd-9324-4f91-b4fb-cedf0c6d6a91'
+        }
+      end
+
+      it 'accepts "shutdown"' do
+        allow(api).to receive(:eapi_call)
+          .with(['enable', 'configure', 'interface Ethernet1', 'shutdown'])
+          .and_return(api_response)
+        expect(api.set_interface_state('Ethernet1', 'shutdown')).to eq(true)
+      end
+      it 'accepts "no shutdown"' do
+        allow(api).to receive(:eapi_call)
+          .with(['enable', 'configure', 'interface Ethernet1', 'no shutdown'])
+          .and_return(api_response)
+        expect(api.set_interface_state('Ethernet1', 'no shutdown')).to eq(true)
+      end
+    end
+    context 'with invalid arguments' do
+      let :api_response do
+        {
+          'jsonrpc' => '2.0',
+          'id' => 'f449e942-940f-499e-989f-74ab4b8b9950',
+          'error' => {
+            'data' => [
+              {},
+              {},
+              {},
+              { 'errors' => ["Invalid input (at token 0: 'garbage')"] }
+            ],
+            'message' => "CLI command 4 of 4 'garbage' failed: invalid command",
+            'code' => 1002
+          }
+        }
+      end
+
+      it 'raises Puppet::Error on an API error' do
+        allow(api).to receive(:eapi_call)
+          .with(['enable', 'configure', 'interface Ethernet1', 'garbage'])
+          .and_return(api_response)
+        expect do
+          api.set_interface_state('Ethernet1', 'garbage')
+        end.to raise_error Puppet::Error
+      end
+    end
+  end
+
+  describe '#set_interface_description' do
+    context 'with valid arguments' do
+      let :api_response do
+        {
+          'jsonrpc' => '2.0',
+          'result'  => [{}, {}, {}],
+          'id'      => '7af750fd-9324-4f91-b4fb-cedf0c6d6a91'
+        }
+      end
+
+      it 'accepts a non-empty string' do
+        preamble = ['enable', 'configure', 'interface Ethernet1']
+        allow(api).to receive(:eapi_call)
+          .with([*preamble, 'description foobar'])
+          .and_return(api_response)
+        expect(api.set_interface_description('Ethernet1', 'foobar')).to eq(true)
+      end
+    end
+
+    context 'with invalid arguments' do
+      let :api_response do
+        msg = "CLI command 4 of 4 'description ' failed: invalid command"
+        {
+          'jsonrpc' => '2.0',
+          'id' => 'b2c792ea-f256-42f3-a60d-5a094b29fb0b',
+          'error' => {
+            'data' => [
+              {},
+              {},
+              {},
+              { 'errors' => ['incomplete command (at token 1: None)'] }
+            ],
+            'message' => msg,
+            'code' => 1002
+          }
+        }
+      end
+
+      it 'raises Puppet::Error on an API error' do
+        allow(api).to receive(:eapi_call)
+          .with(['enable', 'configure', 'interface Ethernet1', 'description '])
+          .and_return(api_response)
+        expect do
+          api.set_interface_description('Ethernet1', '')
+        end.to raise_error Puppet::Error, /incomplete command/
+      end
+    end
+  end
+
+  describe '#set_interface_speed' do
+    context 'with valid arguments' do
+      let :api_response do
+        {
+          'jsonrpc' => '2.0',
+          'result'  => [{}, {}, {}],
+          'id'      => '7af750fd-9324-4f91-b4fb-cedf0c6d6a91'
+        }
+      end
+
+      it 'accepts 1000full' do
+        preamble = ['enable', 'configure', 'interface Ethernet1']
+        allow(api).to receive(:eapi_call)
+          .with([*preamble, 'speed forced 1000full'])
+          .and_return(api_response)
+        expect(api.set_interface_speed('Ethernet1', '1000full')).to eq(true)
+      end
+    end
+
+    context 'when the API returns an error' do
+      let :api_response do
+        errors = 'Speed and duplex settings are not compatible '\
+          'with transceiver for interface Ethernet1.'
+        {
+          'jsonrpc' => '2.0',
+          'id'      => 'd110e10b-a3e9-4378-8361-fd04f1f552fd',
+          'error'   => {
+            'data' => [
+              {},
+              {},
+              {},
+              { 'errors' => [*errors] }
+            ],
+            'message' => "CLI command 4 of 4 'speed forced 1000full'"\
+            ' failed: could not run command',
+            'code' => 1000
+          }
+        }
+      end
+
+      it 'raises Puppet::Error with error message from the api' do
+        preamble = ['enable', 'configure', 'interface Ethernet1']
+        allow(api).to receive(:eapi_call)
+          .with([*preamble, 'speed forced 1000full'])
+          .and_return(api_response)
+        expect do
+          api.set_interface_speed('Ethernet1', '1000full')
+        end.to raise_error Puppet::Error, /not compatible with transceiver/
+      end
+    end
+  end
+
+  describe '#set_interface_mtu' do
+    context 'with valid arguments' do
+      let :api_response do
+        {
+          'jsonrpc' => '2.0',
+          'result'  => [{}, {}, {}],
+          'id'      => '7af750fd-9324-4f91-b4fb-cedf0c6d6a91'
+        }
+      end
+
+      it 'accepts 9000' do
+        preamble = ['enable', 'configure', 'interface Ethernet1']
+        allow(api).to receive(:eapi_call)
+          .with([*preamble, 'mtu 9000'])
+          .and_return(api_response)
+        expect(api.set_interface_mtu('Ethernet1', 9000)).to eq true
+      end
+    end
+  end
+end
+
+describe 'PuppetX::NetDev::EosProviderMethods' do
+  let :fake_provider do
+    klass = Class.new do
+      include PuppetX::NetDev::EosProviderMethods
+      extend PuppetX::NetDev::EosProviderMethods
+    end
+    klass.new
+  end
+
+  describe '#api' do
+    subject { fake_provider.api }
+    it { is_expected.to be_a PuppetX::NetDev::EosApi }
+  end
+
+  describe '#bandwidth_to_speed' do
+    it 'converts 10_000_000 to 10m' do
+      expect(fake_provider.bandwidth_to_speed(10_000_000)).to eq '10m'
+    end
+    it 'converts 10_000_000_000 to 10g' do
+      expect(fake_provider.bandwidth_to_speed(10_000_000_000)).to eq '10g'
+    end
+    it 'converts 1_000_000_000 to 1g' do
+      expect(fake_provider.bandwidth_to_speed(1_000_000_000)).to eq '1g'
+    end
+    it 'converts 56_000_000_000 to 56g' do
+      expect(fake_provider.bandwidth_to_speed(56_000_000_000)).to eq '56g'
+    end
+  end
+
+  describe '#duplex_to_value' do
+    it 'converts "duplexFull" to :full' do
+      expect(fake_provider.duplex_to_value('duplexFull')).to eq :full
+    end
+    it 'converts "duplexHalf" to :half' do
+      expect(fake_provider.duplex_to_value('duplexHalf')).to eq :half
+    end
+    it 'raises ArgumentError with unknown input' do
+      expect do
+        fake_provider.duplex_to_value('garbage')
+      end.to raise_error ArgumentError
+    end
+  end
+
+  describe '#interface_status_to_enable' do
+    it 'converts "connected" to :true' do
+      expect(fake_provider.interface_status_to_enable('connected')).to eq :true
+    end
+    it 'converts "disabled" to :false' do
+      expect(fake_provider.interface_status_to_enable('disabled')).to eq :false
+    end
+  end
+
+  describe 'interface_attributes' do
+    let :attr_hash do
+      {
+        'interfaceStatus' => 'connected',
+        'bandwidth' => 10_000_000_000,
+        'duplex' => 'duplexFull'
+      }
+    end
+    subject { fake_provider.interface_attributes(attr_hash) }
+    it { is_expected.to be_a_kind_of Hash }
   end
 end
