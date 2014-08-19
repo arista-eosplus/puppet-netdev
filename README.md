@@ -1,13 +1,13 @@
-# netdev_stdlib_eos
+# Arista EOS Puppet Providers
 
 #### Table of Contents
 
 1. [Overview](#overview)
-2. [Module Description - What the module does and why it is useful](#module-description)
-3. [Setup - The basics of getting started with netdev_stdlib_eos](#setup)
-    * [What netdev_stdlib_eos affects](#what-netdev_stdlib_eos-affects)
+2. [Module Description](#module-description)
+3. [Setup](#setup)
+    * [What NetDev EOS affects](#what-netdev_stdlib_eos-affects)
     * [Setup requirements](#setup-requirements)
-    * [Beginning with netdev_stdlib_eos](#beginning-with-netdev_stdlib_eos)
+    * [Beginning with NetDev EOS Providers](#beginning-with-netdev_stdlib_eos)
 4. [Usage - Configuration options and additional functionality](#usage)
 5. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
 5. [Limitations - OS compatibility, etc.](#limitations)
@@ -15,65 +15,96 @@
 
 ## Overview
 
-A one-maybe-two sentence summary of what the module does/what problem it solves.
-This is your 30 second elevator pitch for your module. Consider including
-OS/Puppet version it works with.
+This module adds Arista EOS support for the [NetDev Standard Type
+Library](https://github.com/puppetlabs/netdev_stdlib).  This module makes it
+possible to configure switch settings and resources using Puppet running
+natively on an Arista EOS switch.
 
 ## Module Description
 
-If applicable, this section should have a brief description of the technology
-the module integrates with and what that integration enables. This section
-should answer the questions: "What does this module *do*?" and "Why would I use
-it?"
-
-If your module has a range of functionality (installation, configuration,
-management, etc.) this is the time to mention it.
+If you have Arista EOS switches in your environment this module will enable you
+to configure those switches using Puppet.  The EOS providers implement all of
+the types listed in the [NetDev Standard Type
+Library](https://github.com/puppetlabs/netdev_stdlib).  This module extends
+Puppet to configure networking resources such as VLAN's, physical interfaces,
+link aggregates, SNMP settings, among other things.  The module requires an
+Arista EOS switching running software version 4.13 or later with the Puppet
+Enterprise extension installed on the device.  The Puppet agent running on the
+switch will use pluginsync to download the types and providers from the Puppet
+master.
 
 ## Setup
 
-### What netdev_stdlib_eos affects
+### What NetDev EOS affects
 
-* A list of files, packages, services, or operations that the module will alter,
-  impact, or execute on the system it's installed on.
-* This is a great place to stick any warnings.
-* Can be in list or paragraph form.
+These providers configure the Arista switch in a similar fashion to using the
+command line interface.
 
-### Setup Requirements **OPTIONAL**
+### Setup Requirements
 
-If your module requires anything extra before setting up (pluginsync enabled,
-etc.), mention it here.
+This module requires pluginsync in order to synchronize the types and providers
+to the device.
 
 ### Beginning with netdev_stdlib_eos
 
-The very basic steps needed for a user to get the module up and running.
+ 1. Install the module on the Puppet master.
+ 2. Run the puppet agent on the switch to synchronize the types and providers.
+ 3. Verify the providers by running `puppet resource network_interface` using
+    the bash command on the EOS device.
 
-If your most recent release breaks compatibility or requires particular steps
-for upgrading, you may wish to include an additional section here: Upgrading
-(For an example, see http://forge.puppetlabs.com/puppetlabs/firewall).
+```
+veos# bash puppet resource network_interface
+network_interface { 'Ethernet1':
+  description => 'Engineering',
+  duplex      => 'full',
+  enable      => 'true',
+  mtu         => '9214',
+  speed       => '10g',
+}
+network_interface { 'Ethernet2':
+  description => 'Sales',
+  duplex      => 'full',
+  enable      => 'false',
+  mtu         => '9214',
+  speed       => '10g',
+}
+network_interface { 'Ethernet3':
+  duplex => 'full',
+  enable => 'true',
+  mtu    => '9214',
+  speed  => '10g',
+}
+network_interface { 'Ethernet4':
+  duplex => 'full',
+  enable => 'true',
+  mtu    => '9214',
+  speed  => '10g',
+}
+network_interface { 'Management1':
+  duplex => 'full',
+  enable => 'true',
+  mtu    => '1500',
+  speed  => '1g',
+}
+```
 
 ## Usage
 
-Put the classes, types, and resources for customizing, configuring, and doing
-the fancy stuff with your module here.
+Please see the [NetDev Standard Type Library][netdev]
 
 ## Reference
 
-Here, list the classes, types, providers, facts, etc contained in your module.
-This section should include all of the under-the-hood workings of your module so
-people know what the module is touching on their system but don't need to mess
-with things. (We are working on automating this section!)
+TBA
 
 ## Limitations
 
-This is where you list OS compatibility, version compatibility, etc.
+This module is supported on
+
+ * Puppet 3.6 or later installed as an Arista EOS extension
+ * Arista EOS 4.13 or later
 
 ## Development
 
-Since your module is awesome, other users will want to play with it. Let them
-know what the ground rules for contributing are.
+To be added.
 
-## Release Notes/Contributors/Etc **Optional**
-
-If you aren't using changelog, put your release notes here (though you should
-consider using changelog). You may also add any additional sections you feel are
-necessary or important to include here. Please use the `## ` header.
+[netdev]: https://github.com/puppetlabs/netdev_stdlib
