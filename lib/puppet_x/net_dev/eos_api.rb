@@ -62,13 +62,8 @@ module PuppetX
       #   nil if no vlan was found matching the id provided.  The format of
       #   this hash matches the format of {all_vlans}
       def vlan(id)
-        api_response = eapi_call("show vlan #{id}")
-        result = api_response['result']
-        if result
-          return result.first['vlans']
-        else
-          return nil
-        end
+        result = eapi_action("show vlan #{id}", 'list vlans')
+        result.first['vlans'] if result
       end
 
       ##
@@ -82,11 +77,7 @@ module PuppetX
       # @return [Boolean] true if the vlan was created
       def vlan_create(id)
         cmds = ['enable', 'configure', "vlan #{id}"]
-        api_response = eapi_call(cmds)
-
-        err = api_response['error']
-        return true unless err
-        fail Puppet::Error, "could not create vlan #{id}: #{JSON.dump(err)}"
+        eapi_action(cmds, "create vlan #{id}")
       end
 
       ##
@@ -97,11 +88,7 @@ module PuppetX
       # @api public
       def vlan_destroy(id)
         cmds = ['enable', 'configure', "no vlan #{id}"]
-        api_response = eapi_call(cmds)
-
-        return nil unless api_response['error']
-        fail Puppet::Error,
-             "could not create vlan #{id}: #{JSON.dump(api_response)}"
+        eapi_action(cmds, "destroy vlan #{id}")
       end
 
       ##
@@ -114,11 +101,7 @@ module PuppetX
       # @api public
       def set_vlan_name(id, name)
         cmds = ['enable', 'configure', "vlan #{id}"] << "name #{name}"
-        api_response = eapi_call(cmds)
-
-        return nil unless api_response['error']
-        fail Puppet::Error,
-             "could not name vlan #{id} as #{name}: #{JSON.dump(api_response)}"
+        eapi_action(cmds, "set vlan #{id} name to #{name}")
       end
 
       ##
@@ -132,12 +115,7 @@ module PuppetX
       # @api public
       def set_vlan_state(id, state)
         cmds = ['enable', 'configure', "vlan #{id}"] << "state #{state}"
-        api_response = eapi_call(cmds)
-
-        err = api_response['error']
-        return nil unless err
-        msg = "could not suspend vlan #{id}: #{JSON.dump(err)}"
-        fail Puppet::Error, msg
+        eapi_action(cmds, "set vlan #{id} state to #{state}")
       end
 
       ##
@@ -165,8 +143,7 @@ module PuppetX
       #
       # @return [Hash<String,Hash>]
       def all_vlans
-        api_response = eapi_call('show vlan')
-        result = api_response['result']
+        result = eapi_action('show vlan', 'list all vlans')
         result.first['vlans']
       end
 
@@ -177,8 +154,7 @@ module PuppetX
       #
       # @return [Hash<String,Hash>]
       def all_interfaces
-        api_response = eapi_call('show interfaces')
-        result = api_response['result']
+        result = eapi_action('show interfaces', 'list all interfaces')
         result.first['interfaces']
       end
 
@@ -193,12 +169,7 @@ module PuppetX
       # @api public
       def set_interface_state(name, state)
         cmd = %w(enable configure) << "interface #{name}" << state
-
-        api_response = eapi_call(cmd)
-
-        return true unless api_response['error']
-        err_msg = format_error(api_response['error']['data'])
-        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+        eapi_action(cmd, "set interface #{name} state to #{state}")
       end
 
       ##
@@ -213,12 +184,7 @@ module PuppetX
       def set_interface_description(name, description)
         cmd = %w(enable configure) << "interface #{name}"
         cmd << "description #{description}"
-
-        api_response = eapi_call(cmd)
-
-        return true unless api_response['error']
-        err_msg = format_error(api_response['error']['data'])
-        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+        eapi_action(cmd, "set interface #{name} description to #{description}")
       end
 
       ##
@@ -233,11 +199,7 @@ module PuppetX
       def set_interface_speed(name, speed)
         cmd = %w(enable configure) << "interface #{name}"
         cmd << "speed forced #{speed}"
-
-        api_response = eapi_call(cmd)
-        return true unless api_response['error']
-        err_msg = format_error(api_response['error']['data'])
-        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+        eapi_action(cmd, "set interface #{name} speed to #{speed}")
       end
 
       ##
@@ -251,11 +213,7 @@ module PuppetX
       def set_interface_mtu(name, mtu)
         cmd = %w(enable configure) << "interface #{name}"
         cmd << "mtu #{mtu}"
-
-        api_response = eapi_call(cmd)
-        return true unless api_response['error']
-        err_msg = format_error(api_response['error']['data'])
-        fail Puppet::Error, "could not enable interface #{name}: #{err_msg}"
+        eapi_action(cmd, "set interface #{name} mtu to #{mtu}")
       end
 
       ##
@@ -364,7 +322,7 @@ module PuppetX
       #
       # @api private
       #
-      # @return [String] the decoded response as a hash.
+      # @return [Hash] the response from the API
       def eapi_call(command)
         cmds = [*command]
         request_body = format_command(cmds)
@@ -374,6 +332,29 @@ module PuppetX
         decoded_response
       end
       private :eapi_call
+
+      ##
+      # eapi_action makes an API call and handles any error messages in the
+      # return value.
+      #
+      # @param [String,Array<String>] command The command or commands to
+      #   execute, e.g. 'show vlan'
+      #
+      # @param [String] action The action being performed, e.g. 'set interface
+      #   description'.  Used to format error messages on API errors.
+      #
+      # @api private
+      #
+      # @return [Array<Hash>] the value of the 'result' key from the API
+      #   response.
+      def eapi_action(command, action = 'make api call')
+        api_response = eapi_call(command)
+
+        return api_response['result'] unless api_response['error']
+        err_msg = format_error(api_response['error']['data'])
+        fail Puppet::Error, "could not #{action}: #{err_msg}"
+      end
+      private :eapi_action
 
       ##
       # @return [URI] the URI of the server

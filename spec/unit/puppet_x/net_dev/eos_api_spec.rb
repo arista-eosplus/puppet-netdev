@@ -6,6 +6,7 @@ describe PuppetX::NetDev::EosProviderMethods do
   let(:klass) { Class.new { include PuppetX::NetDev::EosProviderMethods } }
   describe '#api' do
     subject { klass.new.api }
+
     it { is_expected.to be_a_kind_of PuppetX::NetDev::EosApi }
   end
 end
@@ -85,7 +86,9 @@ describe PuppetX::NetDev::EosApi do
           .and_return(api_response)
       end
 
-      it { is_expected.to be_nil }
+      it 'raises Puppet:Error with message "could not list vlans"' do
+        expect { subject }.to raise_error Puppet::Error, /could not list vlans/
+      end
     end
   end
 
@@ -101,13 +104,13 @@ describe PuppetX::NetDev::EosApi do
     end
 
     context 'when eAPI reports no errors' do
-      before do
+      it 'accepts 3100 without error' do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'vlan 3100'])
           .and_return(@api_response_ok)
-      end
 
-      it { is_expected.to eq(true) }
+        subject
+      end
     end
 
     context 'when eAPI reports errors' do
@@ -131,7 +134,7 @@ describe PuppetX::NetDev::EosApi do
 
     it 'Attempts to open address unix:///dev/null as a socket' do
       socket_http = described_class.new(address: 'unix:///dev/null').send(:http)
-      expect(-> { socket_http.get('/') }).to raise_error Errno::ENOTSOCK
+      expect { socket_http.get('/') }.to raise_error Errno::ENOTSOCK
     end
   end
 
@@ -364,8 +367,8 @@ describe PuppetX::NetDev::EosApi do
           .and_return(api_response)
       end
 
-      it 'returns nil' do
-        expect(api.vlan_destroy(3111)).to be_nil
+      it 'destroys the vlan without raising errors' do
+        api.vlan_destroy(3111)
       end
     end
 
@@ -411,18 +414,18 @@ describe PuppetX::NetDev::EosApi do
         }
       end
 
-      it 'returns nil when state is "active"' do
+      it 'returns the API response as a Hash when state is "active"' do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'vlan 3111', 'state active'])
           .and_return(api_response)
-        expect(api.set_vlan_state(3111, 'active')).to be_nil
+        api.set_vlan_state(3111, 'active')
       end
 
-      it 'returns nil when state is "suspend"' do
+      it 'returns the API response as a Hash when state is "suspend"' do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'vlan 3111', 'state suspend'])
           .and_return(api_response)
-        expect(api.set_vlan_state(3111, 'suspend')).to be_nil
+        api.set_vlan_state(3111, 'suspend')
       end
     end
 
@@ -472,13 +475,13 @@ describe PuppetX::NetDev::EosApi do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'interface Ethernet1', 'shutdown'])
           .and_return(api_response)
-        expect(api.set_interface_state('Ethernet1', 'shutdown')).to eq(true)
+        api.set_interface_state('Ethernet1', 'shutdown')
       end
       it 'accepts "no shutdown"' do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'interface Ethernet1', 'no shutdown'])
           .and_return(api_response)
-        expect(api.set_interface_state('Ethernet1', 'no shutdown')).to eq(true)
+        api.set_interface_state('Ethernet1', 'no shutdown')
       end
     end
     context 'with invalid arguments' do
@@ -525,7 +528,7 @@ describe PuppetX::NetDev::EosApi do
         allow(api).to receive(:eapi_call)
           .with([*preamble, 'description foobar'])
           .and_return(api_response)
-        expect(api.set_interface_description('Ethernet1', 'foobar')).to eq(true)
+        api.set_interface_description('Ethernet1', 'foobar')
       end
     end
 
@@ -574,7 +577,7 @@ describe PuppetX::NetDev::EosApi do
         allow(api).to receive(:eapi_call)
           .with([*preamble, 'speed forced 1000full'])
           .and_return(api_response)
-        expect(api.set_interface_speed('Ethernet1', '1000full')).to eq(true)
+        api.set_interface_speed('Ethernet1', '1000full')
       end
     end
 
@@ -626,7 +629,7 @@ describe PuppetX::NetDev::EosApi do
         allow(api).to receive(:eapi_call)
           .with([*preamble, 'mtu 9000'])
           .and_return(api_response)
-        expect(api.set_interface_mtu('Ethernet1', 9000)).to eq true
+        api.set_interface_mtu('Ethernet1', 9000)
       end
     end
   end
