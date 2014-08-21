@@ -1,0 +1,9 @@
+{
+  "jsonrpc": "2.0",
+  "result": [
+    {
+      "output": "Name: Et1\nSwitchport: Enabled\nAdministrative Mode: static access\nOperational Mode: static access\nMAC Address Learning: enabled\nAccess Mode VLAN: 1 (default)\nTrunking Native Mode VLAN: 1 (default)\nAdministrative Native VLAN tagging: disabled\nAdministrative private VLAN mapping: ALL\nTrunking VLANs Enabled: ALL\nTrunk Groups: \n\nName: Et2\nSwitchport: Enabled\nAdministrative Mode: static access\nOperational Mode: static access\nMAC Address Learning: enabled\nAccess Mode VLAN: 1 (default)\nTrunking Native Mode VLAN: 1 (default)\nAdministrative Native VLAN tagging: disabled\nAdministrative private VLAN mapping: ALL\nTrunking VLANs Enabled: ALL\nTrunk Groups: \n\nName: Et3\nSwitchport: Enabled\nAdministrative Mode: static access\nOperational Mode: static access\nMAC Address Learning: enabled\nAccess Mode VLAN: 1 (default)\nTrunking Native Mode VLAN: 1 (default)\nAdministrative Native VLAN tagging: disabled\nAdministrative private VLAN mapping: ALL\nTrunking VLANs Enabled: ALL\nTrunk Groups: \n\nName: Et4\nSwitchport: Enabled\nAdministrative Mode: static access\nOperational Mode: static access\nMAC Address Learning: enabled\nAccess Mode VLAN: 1 (default)\nTrunking Native Mode VLAN: 1 (default)\nAdministrative Native VLAN tagging: disabled\nAdministrative private VLAN mapping: ALL\nTrunking VLANs Enabled: ALL\nTrunk Groups: \n\n"
+    }
+  ],
+  "id": "0b348fa2-6359-43cd-8700-1d1d913938cd"
+}

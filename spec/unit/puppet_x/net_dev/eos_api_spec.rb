@@ -58,7 +58,7 @@ describe PuppetX::NetDev::EosApi do
 
       before do
         allow(api).to receive(:eapi_call)
-          .with('show vlan 3110')
+          .with('show vlan 3110', {})
           .and_return(api_response)
       end
 
@@ -82,7 +82,7 @@ describe PuppetX::NetDev::EosApi do
 
       before do
         allow(api).to receive(:eapi_call)
-          .with('show vlan 4000')
+          .with('show vlan 4000', {})
           .and_return(api_response)
       end
 
@@ -106,7 +106,7 @@ describe PuppetX::NetDev::EosApi do
     context 'when eAPI reports no errors' do
       it 'accepts 3100 without error' do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'vlan 3100'])
+          .with(['enable', 'configure', 'vlan 3100'], {})
           .and_return(@api_response_ok)
 
         subject
@@ -116,7 +116,7 @@ describe PuppetX::NetDev::EosApi do
     context 'when eAPI reports errors' do
       before do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'vlan 3100'])
+          .with(['enable', 'configure', 'vlan 3100'], {})
           .and_return(@api_response_error)
       end
 
@@ -154,7 +154,7 @@ describe PuppetX::NetDev::EosApi do
       end
 
       it 'uses the explicitly provided ID' do
-        json = described_class.new.send(:format_command, 'list vlan', 'ID:X')
+        json = described_class.new.send(:format_command, 'list vlan', id: 'ID:X')
         expect(JSON.parse(json)['id']).to eq 'ID:X'
       end
     end
@@ -207,6 +207,48 @@ describe PuppetX::NetDev::EosApi do
     end
   end
 
+  describe '#eapi_action' do
+    before :each do
+      mock_response = double(Net::HTTPOK)
+      allow(mock_response).to receive(:body)
+        .and_return(api_response_body)
+
+      mock_http = double(NetX::HTTPUnix)
+      allow(mock_http).to receive(:request)
+        .and_return(mock_response)
+
+      allow(api).to receive(:http).and_return(mock_http)
+    end
+
+    context 'format: "json" (default)' do
+      let :api_response_body do
+        dir = File.dirname(__FILE__)
+        file = File.join(dir, 'fixture_show_vlan.json')
+        File.read(file)
+      end
+
+      it 'accepts a human readable description as argument 2' do
+        expect(api.send(:eapi_action, 'show vlan', 'show all vlans'))
+          .to eq(JSON.parse(api_response_body)['result'])
+      end
+    end
+
+    context 'format: "text"' do
+      let :api_response_body do
+        dir = File.dirname(__FILE__)
+        json = 'fixture_show_interfaces_switchport_format_text.json'
+        file = File.join(dir, json)
+        File.read(file)
+      end
+
+      it 'accepts a keyword argument of :format => "text"', focus: true do
+        args = ['show interfaces switchport', 'desc', {format: 'text'}]
+        expect(api.send(:eapi_action, *args))
+          .to eq(JSON.parse(api_response_body)['result'])
+      end
+    end
+  end
+
   describe '#all_vlans' do
     subject { api.all_vlans }
 
@@ -224,7 +266,7 @@ describe PuppetX::NetDev::EosApi do
 
     before do
       allow(api).to receive(:eapi_call)
-        .with('show vlan')
+        .with('show vlan', {})
         .and_return(api_response)
     end
 
@@ -254,7 +296,7 @@ describe PuppetX::NetDev::EosApi do
 
     before do
       allow(api).to receive(:eapi_call)
-        .with('show interfaces')
+        .with('show interfaces', {})
         .and_return(api_response)
     end
 
@@ -322,7 +364,7 @@ describe PuppetX::NetDev::EosApi do
 
       before do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'vlan 3111', 'name foo'])
+          .with(['enable', 'configure', 'vlan 3111', 'name foo'], {})
           .and_return(api_response)
       end
 
@@ -341,7 +383,7 @@ describe PuppetX::NetDev::EosApi do
 
       before do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'vlan foo', 'name bar'])
+          .with(['enable', 'configure', 'vlan foo', 'name bar'], {})
           .and_return(api_response)
       end
 
@@ -363,7 +405,7 @@ describe PuppetX::NetDev::EosApi do
 
       before do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'no vlan 3111'])
+          .with(['enable', 'configure', 'no vlan 3111'], {})
           .and_return(api_response)
       end
 
@@ -394,7 +436,7 @@ describe PuppetX::NetDev::EosApi do
 
       before do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'no vlan foo'])
+          .with(['enable', 'configure', 'no vlan foo'], {})
           .and_return(api_response)
       end
 
@@ -416,14 +458,14 @@ describe PuppetX::NetDev::EosApi do
 
       it 'returns the API response as a Hash when state is "active"' do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'vlan 3111', 'state active'])
+          .with(['enable', 'configure', 'vlan 3111', 'state active'], {})
           .and_return(api_response)
         api.set_vlan_state(3111, 'active')
       end
 
       it 'returns the API response as a Hash when state is "suspend"' do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'vlan 3111', 'state suspend'])
+          .with(['enable', 'configure', 'vlan 3111', 'state suspend'], {})
           .and_return(api_response)
         api.set_vlan_state(3111, 'suspend')
       end
@@ -451,7 +493,7 @@ describe PuppetX::NetDev::EosApi do
 
       before do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'vlan 3111', 'state foo'])
+          .with(['enable', 'configure', 'vlan 3111', 'state foo'], {})
           .and_return(api_response)
       end
 
@@ -473,13 +515,15 @@ describe PuppetX::NetDev::EosApi do
 
       it 'accepts "shutdown"' do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'interface Ethernet1', 'shutdown'])
+          .with(['enable', 'configure', 'interface Ethernet1', 'shutdown'], {})
           .and_return(api_response)
         api.set_interface_state('Ethernet1', 'shutdown')
       end
+
       it 'accepts "no shutdown"' do
+        args = ['enable', 'configure', 'interface Ethernet1', 'no shutdown']
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'interface Ethernet1', 'no shutdown'])
+          .with(args, {})
           .and_return(api_response)
         api.set_interface_state('Ethernet1', 'no shutdown')
       end
@@ -504,7 +548,7 @@ describe PuppetX::NetDev::EosApi do
 
       it 'raises Puppet::Error on an API error' do
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'interface Ethernet1', 'garbage'])
+          .with(['enable', 'configure', 'interface Ethernet1', 'garbage'], {})
           .and_return(api_response)
         expect do
           api.set_interface_state('Ethernet1', 'garbage')
@@ -526,7 +570,7 @@ describe PuppetX::NetDev::EosApi do
       it 'accepts a non-empty string' do
         preamble = ['enable', 'configure', 'interface Ethernet1']
         allow(api).to receive(:eapi_call)
-          .with([*preamble, 'description foobar'])
+          .with([*preamble, 'description foobar'], {})
           .and_return(api_response)
         api.set_interface_description('Ethernet1', 'foobar')
       end
@@ -552,8 +596,9 @@ describe PuppetX::NetDev::EosApi do
       end
 
       it 'raises Puppet::Error on an API error' do
+        args = ['enable', 'configure', 'interface Ethernet1', 'description ']
         allow(api).to receive(:eapi_call)
-          .with(['enable', 'configure', 'interface Ethernet1', 'description '])
+          .with(args, {})
           .and_return(api_response)
         expect do
           api.set_interface_description('Ethernet1', '')
@@ -575,7 +620,7 @@ describe PuppetX::NetDev::EosApi do
       it 'accepts 1000full' do
         preamble = ['enable', 'configure', 'interface Ethernet1']
         allow(api).to receive(:eapi_call)
-          .with([*preamble, 'speed forced 1000full'])
+          .with([*preamble, 'speed forced 1000full'], {})
           .and_return(api_response)
         api.set_interface_speed('Ethernet1', '1000full')
       end
@@ -605,7 +650,7 @@ describe PuppetX::NetDev::EosApi do
       it 'raises Puppet::Error with error message from the api' do
         preamble = ['enable', 'configure', 'interface Ethernet1']
         allow(api).to receive(:eapi_call)
-          .with([*preamble, 'speed forced 1000full'])
+          .with([*preamble, 'speed forced 1000full'], {})
           .and_return(api_response)
         expect do
           api.set_interface_speed('Ethernet1', '1000full')
@@ -627,7 +672,7 @@ describe PuppetX::NetDev::EosApi do
       it 'accepts 9000' do
         preamble = ['enable', 'configure', 'interface Ethernet1']
         allow(api).to receive(:eapi_call)
-          .with([*preamble, 'mtu 9000'])
+          .with([*preamble, 'mtu 9000'], {})
           .and_return(api_response)
         api.set_interface_mtu('Ethernet1', 9000)
       end

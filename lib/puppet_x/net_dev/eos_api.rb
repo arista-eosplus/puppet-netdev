@@ -255,17 +255,21 @@ module PuppetX
       # @param [String, Array<String>] command The command to execute on the
       #   switch, e.g. 'show vlan' or ['show vlan 1', 'show vlan 2'].
       #
-      # @param [String] id The identifier for this request.  If omitted, a
-      #   unique identifier will be generated.
+      # @option opts [String] :id The identifier for this request.  If omitted,
+      #   a unique identifier will be generated.
+      #
+      # @option opts [String] :format ('json') The desired format of the
+      #   response, e.g. 'text' or 'json'.  Defaults to 'json' if not provided.
       #
       # @api private
       #
       # @return [String] The JSON string suitable for use with HTTP POST API
       #   calls to the EOS API.
-      def format_command(command, id = nil)
+      def format_command(command, options = {})
         cmds = [*command]
-        req_id = id.nil? ? SecureRandom.uuid : id
-        params = { 'version' => 1, 'cmds' => cmds, 'format' => 'json' }
+        req_id = options[:id].nil? ? SecureRandom.uuid : options[:id]
+        format = options[:format].nil? ? 'json' : options[:format]
+        params = { 'version' => 1, 'cmds' => cmds, 'format' => format }
         request = {
           'jsonrpc' => '2.0', 'method' => 'runCmds',
           'params' => params, 'id' => req_id
@@ -320,12 +324,18 @@ module PuppetX
       # @param [String,Array<String>] command The command or commands to
       #   execute, e.g. 'show vlan'
       #
+      # @option opts [String] :id The identifier for this request.  If omitted,
+      #   a unique identifier will be generated.
+      #
+      # @option opts [String] :format ('json') The desired format of the
+      #   response, e.g. 'text' or 'json'.  Defaults to 'json' if not provided.
+      #
       # @api private
       #
       # @return [Hash] the response from the API
-      def eapi_call(command)
+      def eapi_call(command, options = {})
         cmds = [*command]
-        request_body = format_command(cmds)
+        request_body = format_command(cmds, options)
         req = eapi_request(request_body)
         resp = http.request(req)
         decoded_response = JSON.parse(resp.body)
@@ -343,12 +353,18 @@ module PuppetX
       # @param [String] action The action being performed, e.g. 'set interface
       #   description'.  Used to format error messages on API errors.
       #
+      # @option opts [String] :id The identifier for this request.  If omitted,
+      #   a unique identifier will be generated.
+      #
+      # @option opts [String] :format ('json') The desired format of the
+      #   response, e.g. 'text' or 'json'.  Defaults to 'json' if not provided.
+      #
       # @api private
       #
       # @return [Array<Hash>] the value of the 'result' key from the API
       #   response.
-      def eapi_action(command, action = 'make api call')
-        api_response = eapi_call(command)
+      def eapi_action(command, action = 'make api call', options = {})
+        api_response = eapi_call(command, options)
 
         return api_response['result'] unless api_response['error']
         err_msg = format_error(api_response['error']['data'])
