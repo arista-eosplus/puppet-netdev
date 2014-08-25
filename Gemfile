@@ -26,6 +26,7 @@ group :development, :test do
   gem 'rspec', '~> 3.0.0'
   gem 'rspec-mocks', '~> 3.0.0'
   gem 'pry',                     :require => false
+  gem 'pry-doc',                 :require => false
   gem 'simplecov',               :require => false
 end
 
