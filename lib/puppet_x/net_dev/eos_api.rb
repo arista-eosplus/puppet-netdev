@@ -159,6 +159,64 @@ module PuppetX
       end
 
       ##
+      # all_virtual_interfaces obtains information about all of the Layer 2
+      # "virtual" interfaces configured on the switch.  This includes link
+      # aggregates (a.k.a switch virtual interfaces) and their attributes.
+      # These virtual interfaces are typically layered on top of physical
+      # interfaces.  Logical interfaces, e.g. VLAN trunking or Layer-3 IPv4,
+      # IPv6 are layered on top of these virtual interfaces.
+      #
+      # This method maps data from the `show interfaces switchport` EOS
+      # command in text mode.  This method should be updated to obtain JSON
+      # data when the EOS API supports it.
+      #
+      # @api public
+      #
+      # @return [Hash<String, Hash>] Structured data with each interface name
+      #   as the key and interface attributes as a Hash for each value.
+      def all_virtual_interfaces
+        result = eapi_action('show interfaces switchport',
+                             'get all virtual interface attributes',
+                             format: 'text')
+        output = result.each_with_object('') { |i,str| str << i['output'] }
+        # Each interface is separated by a blank line
+        interfaces = output.split("\n\n")
+        rval = interfaces.each_with_object({}) do |str, hsh|
+          hsh.merge!(parse_virtual_interface(str))
+        end
+        require 'pry'; binding.pry;
+        rval
+      end
+
+      ##
+      # parse_virtual_interface parses a string containing virtual interface
+      # attributes and returns structured data.  For example, this method
+      # parses the following block of text:
+      #
+      #     Name: Et2
+      #     Switchport: Enabled
+      #     Administrative Mode: static access
+      #     Operational Mode: static access
+      #     MAC Address Learning: enabled
+      #     Access Mode VLAN: 1 (default)
+      #     Trunking Native Mode VLAN: 1 (default)
+      #     Administrative Native VLAN tagging: disabled
+      #     Administrative private VLAN mapping: ALL
+      #     Trunking VLANs Enabled: ALL
+      #     Trunk Groups:
+      #
+      # @param [String] buf The string buffer to be parsed.
+      #
+      # @api private
+      #
+      # @return [Hash<String,Hash>] Hash of virtual interface attributes with
+      #   the interface name as the key, e.g. 'Ethernet1'
+      def parse_virtual_interface(buf)
+        mdata = %r{Name: (\w+)}.match(buf)
+        require 'pry'; binding.pry;
+      end
+
+      ##
       # set_interface_state enables or disables a network interface
       #
       # @param [String] name The interface name, e.g. 'Ethernet1'
