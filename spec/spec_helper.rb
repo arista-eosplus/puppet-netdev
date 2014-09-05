@@ -1,8 +1,17 @@
-dir = File.expand_path(File.dirname(__FILE__))
+# encoding: utf-8
 
-require 'puppet'
-require 'rspec-puppet'
-require 'puppetlabs_spec_helper/module_spec_helper'
+require 'simplecov'
+SimpleCov.start do
+  add_filter '/spec/'
+  add_filter '/.bundle/'
+end
+
+require 'puppet_x/net_dev/eos_api'
+require 'puppetlabs_spec_helper/puppet_spec_helper'
 
 RSpec.configure do |config|
+  # rspec configuration
+  config.mock_with :rspec do |rspec_config|
+    rspec_config.syntax = :expect
+  end
 end

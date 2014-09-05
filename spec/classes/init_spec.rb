@@ -1,3 +1,5 @@
+# encoding: utf-8
+#
 # require 'spec_helper'
 # describe 'netdev_stdlib_eos' do
 #
