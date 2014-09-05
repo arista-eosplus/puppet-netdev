@@ -242,7 +242,7 @@ describe PuppetX::NetDev::EosApi do
       end
 
       it 'accepts a keyword argument of :format => "text"', focus: true do
-        args = ['show interfaces switchport', 'desc', {format: 'text'}]
+        args = ['show interfaces switchport', 'desc', { format: 'text' }]
         expect(api.send(:eapi_action, *args))
           .to eq(JSON.parse(api_response_body)['result'])
       end

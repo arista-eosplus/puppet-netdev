@@ -18,7 +18,7 @@ module PuppetX
     #   >> vlans = api.all_vlans
     #   >> vlans.keys
     #   => ['1', '3110']
-    class EosApi # rubocop:disable Style/ClassLength
+    class EosApi # rubocop:disable Metrics/ClassLength
       attr_reader :address, :port, :username, :password
 
       ##
@@ -451,7 +451,7 @@ module PuppetX
       #
       # @return [Symbol] :true or :false
       def interface_status_to_enable(status)
-        if status == 'disabled' then :false else :true end
+        status == 'disabled' ? :false : :true
       end
 
       ##
