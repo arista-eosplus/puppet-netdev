@@ -1,0 +1,17 @@
+{
+  "Port-Channel4": {
+    "name": "Port-Channel4",
+    "ports": [
+      "Ethernet3",
+      "Ethernet4"
+    ],
+    "mode": "active"
+  },
+  "Port-Channel9": {
+    "name": "Port-Channel9",
+    "ports": [
+      "Ethernet2"
+    ],
+    "mode": "active"
+  }
+}

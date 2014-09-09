@@ -13,6 +13,8 @@ dir = File.expand_path(File.dirname(__FILE__))
 Dir["#{dir}/support/**/*.rb"].sort.each { |f| require f }
 
 RSpec.configure do |config|
+  config.include FixtureHelpers
+
   # rspec configuration
   config.mock_with :rspec do |rspec_config|
     rspec_config.syntax = :expect

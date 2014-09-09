@@ -1,0 +1,9 @@
+{
+  "jsonrpc": "2.0",
+  "result": [
+    {
+      "output": "Port Channel Port-Channel3 (Fallback State: Unconfigured):\n  Active Ports:\n       Port            Time became active    Protocol \n    --------------- ------------------------ -------- \n       Ethernet2       22:48:03              Static   \n\n  Configured, but inactive ports:\n       Port            Time became inactive    Reason unconfigured \n    --------------- -------------------------- ------------------- \n       Ethernet1       22:48:53                not link up         \n\nPort Channel Port-Channel4 (Fallback State: Unconfigured):\n  No Active Ports\n  Configured, but inactive ports:\n       Port            Time became inactive    Reason unconfigured       \n    --------------- -------------------------- ------------------------- \n       Ethernet3       Always                  Waiting for LACP response \n       Ethernet4       Always                  Waiting for LACP response \n\n"
+    }
+  ],
+  "id": "d68b26cd-71de-40cd-88c3-97703e62f428"
+}

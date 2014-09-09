@@ -1,0 +1,8 @@
+{
+  "Port-Channel4": {
+    "mode": "active"
+  },
+  "Port-Channel9": {
+    "mode": "active"
+  }
+}

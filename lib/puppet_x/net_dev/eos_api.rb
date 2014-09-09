@@ -19,7 +19,14 @@ module PuppetX
     #   >> vlans.keys
     #   => ['1', '3110']
     class EosApi # rubocop:disable Metrics/ClassLength
-      attr_reader :address, :port, :username, :password
+      # IP address or hostname of the REST api
+      attr_reader :address
+      # TCP port of the REST api
+      attr_reader :port
+      # API username
+      attr_reader :username
+      # API password
+      attr_reader :password
 
       ##
       # initialize an API instance.  The API will communicate with the HTTP
@@ -92,6 +99,105 @@ module PuppetX
       end
 
       ##
+      # channel_group_destroy destroys a port channel group.
+      #
+      # @param [String] name The port channel name, e.g 'Port-Channel3'
+      #
+      # @api public
+      def channel_group_destroy(name)
+        # Need to remove all interfaces from the channel group.
+        port_channels = all_portchannels_detailed
+        channel_group = port_channels[name]
+        unless channel_group
+          msg = "#{name} is not in #{port_channels.keys.inspect}"
+          fail ArgumentError, msg
+        end
+        interfaces = channel_group['ports']
+        interfaces.each { |iface| interface_unset_channel_group(iface) }
+      end
+
+      ##
+      # interface_unset_channel_group removes a specific interface from all
+      # channel groups.
+      #
+      # @param [String] interface The interface name to remove from its
+      #   associated channel group, e.g. 'Ethernet1'
+      #
+      # @api public
+      def interface_unset_channel_group(interface)
+        cmds = %w(enable configure) << "interface #{interface}"
+        cmds << 'no channel-group'
+        eapi_action(cmds, "remove #{interface} from channel group")
+      end
+
+      ##
+      # interface_set_channel_group configures an interface to be a member of a
+      # specified channel group ID.
+      #
+      # @param [String] interface The interface name to add to the channel
+      #   group, e.g. 'Ethernet1'.
+      #
+      # @option opts [Fixnum] :group The group ID the interface will become a
+      #   member of, e.g. 3.
+      #
+      # @option opts [Symbol] :mode (:active, :passive, :disabled) The LACP
+      #   operating mode of the interface.  Note, the only way to change the
+      #   LACP mode is to delete the channel group and re-create the channel
+      #   group.
+      #
+      # @api public
+      def interface_set_channel_group(interface, opts)
+        channel_group = opts[:group]
+        mode = case opts[:mode]
+               when :active, :passive then opts[:mode]
+               when :disabled then :on
+               else fail ArgumentError, "Unknown LACP mode #{opts[:mode]}"
+               end
+
+        cmd = %w(enable configure) << "interface #{interface}"
+        cmd << "channel-group #{channel_group} mode #{mode}"
+        msg = "join #{interface} to channel group #{channel_group}"
+        eapi_action(cmd, msg)
+      end
+
+      ##
+      # port_channel_destroy destroys a port channel interface and removes all
+      # interfaces from the channel group.
+      #
+      # @param [String] name The name of the port channel interface, e.g
+      #   'Port-Channel3'
+      #
+      # @api public
+      def port_channel_destroy(name)
+        cmds = %w(enable configure) << "no interface #{name}"
+        eapi_action(cmds, "remove #{name}")
+      end
+
+      ##
+      # channel_group_create creates a channel group and associated port
+      # channel interface if the interface does not already exist.
+      #
+      # @param [String] name The name of the port channel interface, e.g.
+      #   'Port-Channel3'.
+      #
+      # @option opts [Symbol] :mode (:active, :passive, :disabled) The LACP
+      #   operating mode of the interface.  Note, the only way to change the
+      #   LACP mode is to delete the channel group and re-create the channel
+      #   group.
+      #
+      # @option opts [Symbol] :interfaces (['Ethernet1', 'Ethernet2']) The
+      #   member interfaces of the channel group.
+      #
+      # @api public
+      def channel_group_create(name, opts)
+        channel_group = name.scan(/\d+/).first.to_i
+        opts[:interfaces].each do |interface|
+          set_opts = { mode: opts[:mode], group: channel_group }
+          interface_set_channel_group(interface, set_opts)
+        end
+      end
+
+      ##
       # set_vlan_name assigns a name to a vlan
       #
       # @param [Integer] id The vlan ID
@@ -148,11 +254,110 @@ module PuppetX
       end
 
       ##
+      # all_portchannels returns a hash of all port channels based on multiple
+      # sources of data from the API.
+      #
+      # @api public
+      #
+      # @return [Hash<String,Hash>] where the key is the port channel name,
+      #   e.g. 'Port-Channel10'
+      def all_portchannels
+        detailed = all_portchannels_detailed
+        modes = all_portchannel_modes
+        # Merge the two
+        detailed.each_with_object(Hash.new) do |(name, attr), hsh|
+          hsh[name] = modes[name] ? attr.merge(modes[name]) : attr
+        end
+      end
+
+      ##
+      # all_portchannels_detailed returns a hash of all port channels based on
+      # the `show etherchannel detailed` command.
+      #
+      # @api private
+      #
+      # @return [Hash<String,Hash>] where the key is the port channel name,
+      #   e.g. 'Port-Channel10'
+      def all_portchannels_detailed
+        # JSON format is not supported in EOS 4.13.7M so use text format
+        result = eapi_action('show etherchannel detailed', 'list port channels',
+                             format: 'text')
+        text = result.first['output']
+        parse_portchannels(text)
+      end
+
+      ##
+      # all_portchannel_modes returns a hash of each of the port channel LACP
+      # modes.  This method could be merged with the data from the
+      # all_portchannels method.
+      #
+      # @api private
+      #
+      # @return [Hash<String,Hash>] where the key is the port channel name,
+      #   e.g. 'Port-Channel10'
+      def all_portchannel_modes
+        # JSON format is not supported in EOS 4.13.7M so use text format
+        result = eapi_action('show port-channel summary', 'get lag modes',
+                             format: 'text')
+        text = result.first['output']
+        parse_portchannel_modes(text)
+      end
+
+      ##
+      # Parse the portchannel modes from the text of the `show port-channel
+      # summary` command.  The following is an example of two channel groups,
+      # one static, one active.
+      #
+      # rubocop:disable Metrics/LineLength, Metrics/MethodLength, Style/TrailingWhitespace
+      #
+      #                      Flags
+      #     ------------------------ ---------------------------- -------------------------
+      #       a - LACP Active          p - LACP Passive           * - static fallback
+      #       F - Fallback enabled     f - Fallback configured    ^ - individual fallback
+      #       U - In Use               D - Down
+      #       + - In-Sync              - - Out-of-Sync            i - incompatible with agg
+      #       P - bundled in Po        s - suspended              G - Aggregable
+      #       I - Individual           S - ShortTimeout           w - wait for agg
+      #     
+      #     Number of channels in use: 1
+      #     Number of aggregators:1
+      #     
+      #        Port-Channel       Protocol    Ports
+      #     ------------------ -------------- ----------------
+      #        Po3(U)             Static       Et1(D) Et2(P)
+      #        Po4(D)             LACP(a)      Et3(G-) Et4(G-)
+      #
+      # @api private
+      #
+      # @return [Hash<String,Hash>] where the key is the port channel name,
+      #   e.g. 'Port-Channel10'
+      def parse_portchannel_modes(text)
+        lines = text.lines.each_with_object(Array.new) do |v, ary|
+          ary << v.chomp if /^\s*Po\d/.match(v)
+        end
+        lines.each_with_object(Hash.new) do |line, hsh|
+          mdata = /^\s+Po(\d+).*?\s+([a-zA-Z()0-9_-]+)/.match(line)
+          idx = mdata[1]
+          protocol = mdata[2]
+          mode = case protocol
+                 when 'Static' then :disabled
+                 when /LACP/
+                   flags = /\((.*?)\)/.match(protocol)[1]
+                   if flags.include? 'p' then :passive
+                   elsif flags.include? 'a' then :active
+                   end
+                 end
+          hsh["Port-Channel#{idx}"] = { 'mode' => mode }
+        end
+      end
+
+      ##
       # all_interfaces returns a hash of all interfaces
       #
       # @api public
       #
-      # @return [Hash<String,Hash>]
+      # @return [Hash<String,Hash>] where the key is the interface name, e.g.
+      #   'Management1'
       def all_interfaces
         result = eapi_action('show interfaces', 'list all interfaces')
         result.first['interfaces']
@@ -279,6 +484,102 @@ module PuppetX
       private :format_command
 
       ##
+      # parse_portchannels accepts the text output of the `show etherchannel
+      # detailed` command and parses the text into structured data with the
+      # portchannel names as keys and portchannel attributes as key/values in a
+      # hash.
+      #
+      # @param [String] text The text output to parse.
+      #
+      # @api private
+      #
+      # @return [Hash<String,Hash>] where the key is the port channel name,
+      #   e.g. 'Port-Channel10'
+      def parse_portchannels(text) # rubocop:disable Metrics/MethodLength
+        groups = text.split('Port Channel ')
+        groups.each_with_object({}) do |str, group|
+          lines = [*str.lines]
+          name = parse_portchannel_name(lines.shift)
+          next unless name
+          active_ports = parse_portchannel_active_ports(lines)
+          configured_ports = parse_portchannel_configured_ports(lines)
+          group[name] = {
+            'name'  => name,
+            'ports' => [*active_ports, *configured_ports].sort
+          }
+        end
+      end
+      private :parse_portchannels
+
+      ##
+      # parse_portchannel_active_ports takes a portchannel section from `show
+      # port-channel detailed` and parses all of the active ports from the
+      # section.
+      #
+      # @param [Array<String>] lines Array of string lines for the section,
+      #
+      # @api private
+      #
+      # @return [Array<String>] Array of string port names, e.g. ['Ethernet1',
+      #   'Ethernet2']
+      def parse_portchannel_active_ports(group_lines)
+        lines = group_lines.dup
+        # Check if there are no active ports
+        mdata = /(No)? Active Ports/.match(lines.shift)
+        return [] if mdata[1] # return if there are none
+        lines.shift until /^\s*Port /.match(lines.first) || lines.empty?
+        lines.shift(2) # heading line and ---- line
+        # Read interfaces until the first blank line
+        lines.each_with_object([]) do |l, a|
+          l.chomp!
+          break a if l.empty?
+          a << l.split.first
+        end
+      end
+
+      ##
+      # parse_portchannel_configured_ports takes a portchannel section from
+      # `show port-channel detailed` and parses all of the active ports from
+      # the section.
+      #
+      # @param [Array<String>] lines Array of string lines for the section,
+      #
+      # @api private
+      #
+      # @return [Array<String>] Array of string port names, e.g. ['Ethernet1',
+      #   'Ethernet2']
+      def parse_portchannel_configured_ports(group_lines)
+        lines = group_lines.dup
+        # Check if there are no active ports
+        lines.shift until /inactive ports/.match(lines.first) || lines.empty?
+        return [] if lines.empty?
+        lines.shift(3)
+        lines.each_with_object([]) do |l, a|
+          l.chomp!
+          break a if l.empty?
+          a << l.split.first
+        end
+      end
+
+      ##
+      # parse_portchannel_name parses out the portchannel name from the first
+      # line of a group section.
+      #
+      # @param [String] line The first line of a portchannel group detailed
+      #   show statement, e.g. 'Port Channel Port-Channel1 (Fallback State:
+      #   Unconfigured):'
+      #
+      # @api private
+      #
+      # @return [String,nil] the name of the portchannel group or nil if the
+      #   name could not be parsed.
+      def parse_portchannel_name(line)
+        mdata = /^(?:Port Channel )?(Port-Channel\d+)/.match(line)
+        mdata[1] if mdata
+      end
+      private :parse_portchannel_name
+
+      ##
       # eapi_request returns a Net::HTTP::Post instance suitable for use with
       # the http client to make an API call to EOS.  The request will
       # automatically be initialized with an username and password if the
@@ -397,7 +698,7 @@ module PuppetX
       def api
         ## FIXME remove the hard coded address and make this configurable.
         @api ||= PuppetX::NetDev::EosApi.new(
-          address: 'dhcp150.jeff.backline.puppetlabs.net',
+          address: 'localhost',
           port: 80,
           username: 'admin',
           password: 'puppet')
@@ -473,6 +774,31 @@ module PuppetX
         hsh[:duplex]      = duplex_to_value(attr_hash['duplex'])
         hsh[:description] = attr_hash['description']
         hsh
+      end
+    end
+
+    ##
+    #  EosProviderClassMethods implements common methods, e.g. `self.prefetch`
+    #  for EOS providers.
+    module EosProviderClassMethods
+      ##
+      # prefetch associates resources declared in the Puppet catalog with
+      # resources discovered on the system using the instances class method.
+      # Each resource that has a matching provider in the instances list will
+      # have the provider bound to the resource.
+      #
+      # @param [Hash] resources The set of resources declared in the catalog.
+      #
+      # @return [Hash<String,Puppet::Type>] catalog resources with updated
+      #   provider instances.
+      def prefetch(resources)
+        provider_hash = instances.each_with_object({}) do |provider, hsh|
+          hsh[provider.name] = provider
+        end
+
+        resources.each_pair do |name, resource|
+          resource.provider = provider_hash[name] if provider_hash[name]
+        end
       end
     end
   end
