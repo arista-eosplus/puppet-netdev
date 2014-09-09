@@ -67,6 +67,8 @@ Puppet::Type.type(:network_vlan).provide(:eos) do
       state = 'suspend'
     when :false
       state = 'active'
+    else
+      fail Puppet::Error, "unknown shutdown value #{value.inspect}"
     end
     api.set_vlan_state(resource[:id], state)
     @property_hash[:shutdown] = value
