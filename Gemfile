@@ -18,6 +18,7 @@ group :development do
 end
 
 gem 'net_http_unix'
+gem 'puppetmodule-netdev_stdlib', '~> 0.10.0'
 
 group :development, :test do
   gem 'yard'
@@ -28,6 +29,7 @@ group :development, :test do
   gem 'pry',                     :require => false
   gem 'pry-doc',                 :require => false
   gem 'simplecov',               :require => false
+  gem 'puppetlabs_spec_helper'
 end
 
 ENV['GEM_PUPPET_VERSION'] ||= ENV['PUPPET_GEM_VERSION']
