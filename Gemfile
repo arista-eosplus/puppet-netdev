@@ -8,7 +8,7 @@ def location_for(place, fake_version = nil)
   end
   mdata2 = %r{^file:\/\/(.*)}.match(place)
   if mdata2
-    return ['>= 0', { path: File.expand_path(mdata[1]), require: false }]
+    return ['>= 0', { path: File.expand_path(mdata2[1]), require: false }]
   end
   [place, { require: false }]
 end
@@ -21,7 +21,6 @@ group :development do
 end
 
 gem 'net_http_unix'
-gem 'puppetmodule-netdev_stdlib', '~> 0.10.0'
 
 group :development, :test do
   gem 'yard'
@@ -41,5 +40,12 @@ if puppetversion
   gem 'puppet', *location_for(puppetversion)
 else
   gem 'puppet', require: false
+end
+
+netdev_stdlib_version = ENV['GEM_NETDEV_STDLIB_VERSION']
+if netdev_stdlib_version
+  gem 'puppetmodule-netdev_stdlib', *location_for(netdev_stdlib_version)
+else
+  gem 'puppetmodule-netdev_stdlib', '~> 0.10.0'
 end
 # vim:ft=ruby
