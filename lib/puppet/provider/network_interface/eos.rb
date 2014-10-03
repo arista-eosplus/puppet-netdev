@@ -67,7 +67,7 @@ Puppet::Type.type(:network_interface).provide(:eos) do
   #     speed forced 1000full
   def flush
     flush_enable_state
-    flush_speed_and_duplex
+    flush_speed_and_duplex(resource[:name])
     flush_mtu
     flush_description
     @property_hash = resource.to_hash
@@ -92,20 +92,6 @@ Puppet::Type.type(:network_interface).provide(:eos) do
     description = @property_flush[:description]
     return nil unless description
     api.set_interface_description(resource[:name], description)
-  end
-
-  ##
-  # flush_speed_and_duplex consolidates the duplex and speed settings into one
-  # API call to manage the interface speed.
-  def flush_speed_and_duplex
-    speed = convert_speed(@property_flush[:speed])
-    duplex = @property_flush[:duplex]
-    return nil unless speed || duplex
-
-    speed_out = speed ? speed : convert_speed(@property_hash[:speed])
-    duplex_out = duplex ? duplex.downcase : @property_hash[:duplex].to_s
-
-    api.set_interface_speed(resource[:name], "#{speed_out}#{duplex_out}")
   end
 
   ##

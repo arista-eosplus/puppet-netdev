@@ -191,7 +191,11 @@ module PuppetX
       # @api public
       def channel_group_create(name, opts)
         channel_group = name.scan(/\d+/).first.to_i
-        opts[:interfaces].each do |interface|
+        interfaces = [*opts[:interfaces]]
+        if interfaces.empty?
+          fail ArgumentError, 'Cannot create a channel group with no interfaces'
+        end
+        interfaces.each do |interface|
           set_opts = { mode: opts[:mode], group: channel_group }
           interface_set_channel_group(interface, set_opts)
         end
@@ -773,6 +777,39 @@ module PuppetX
         hsh[:duplex]      = duplex_to_value(attr_hash['duplex'])
         hsh[:description] = attr_hash['description']
         hsh
+      end
+
+      ##
+      # port_channel_attributes takes an attribute hash from the EOS API and
+      # maps the values to provider attributes for the port_channel type.
+      #
+      # @param [Hash] attr_hash Interface attribute hash
+      #
+      # @api public
+      #
+      # @return [Hash] provider attributes suitable for merge into a provider
+      #   hash that will be passed to the provider initializer.
+      def port_channel_attributes(attr_hash)
+        hsh = {}
+        hsh[:speed]       = bandwidth_to_speed(attr_hash['bandwidth'])
+        hsh[:description] = attr_hash['description']
+        hsh
+      end
+
+      ##
+      # flush_speed_and_duplex consolidates the duplex and speed settings into one
+      # API call to manage the interface speed.
+      #
+      # @param [String] name The name of the interface, e.g. 'Ethernet1'
+      def flush_speed_and_duplex(name)
+        speed = convert_speed(@property_flush[:speed])
+        duplex = @property_flush[:duplex]
+        return nil unless speed || duplex
+
+        speed_out = speed ? speed : convert_speed(@property_hash[:speed])
+        duplex_out = duplex ? duplex.downcase : @property_hash[:duplex].to_s
+
+        api.set_interface_speed(name, "#{speed_out}#{duplex_out}")
       end
 
       ##

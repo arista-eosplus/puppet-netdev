@@ -38,6 +38,8 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
     before :each do
       allow(described_class.api).to receive(:all_portchannels)
         .and_return(fixture(:api_all_portchannels))
+      allow(described_class.api).to receive(:all_interfaces)
+        .and_return(fixture(:api_all_interfaces))
     end
 
     describe '.instances' do
