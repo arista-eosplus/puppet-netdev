@@ -15,11 +15,12 @@ Puppet::Type.type(:network_interface).provide(:eos) do
   def self.instances
     interfaces = api.all_interfaces
 
-    interfaces.map do |name, attr_hash|
+    interfaces.each_with_object([]) do |(name, attr_hash), ary|
+      next unless attr_hash['hardware'] == 'ethernet'
       provider_hash = { name: name }
       provider_hash.merge! interface_attributes(attr_hash)
 
-      new(provider_hash)
+      ary << new(provider_hash)
     end
   end
 
