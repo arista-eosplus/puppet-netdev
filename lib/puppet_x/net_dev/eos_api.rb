@@ -696,12 +696,11 @@ module PuppetX
       #
       # @return [PuppetX::NetDev::EosApi] api instance
       def api
-        ## FIXME remove the hard coded address and make this configurable.
         @api ||= PuppetX::NetDev::EosApi.new(
-          address: 'localhost',
-          port: 80,
-          username: 'admin',
-          password: 'puppet')
+          address: ENV['EOS_HOSTNAME'] || 'localhost',
+          port: ENV['EOS_PORT'] || 80,
+          username: ENV['EOS_USERNAME'] || 'admin',
+          password: ENV['EOS_PASSWORD'] || 'puppet')
       end
 
       ##
