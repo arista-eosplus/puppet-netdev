@@ -12,20 +12,7 @@ describe PuppetX::NetDev::EosProviderMethods do
 end
 
 describe PuppetX::NetDev::EosApi do
-  # let(:address) { 'dhcp150.jeff.backline.puppetlabs.net' }
-  let(:address) { 'localhost' }
-  let(:port) { 80 }
-  let(:username) { 'admin' }
-  let(:password) { 'puppet' }
-  let(:config) do
-    {
-      address: address,
-      port: 80,
-      username: 'admin',
-      password: 'puppet'
-    }
-  end
-  let(:api) { PuppetX::NetDev::EosApi.new(config) }
+  let(:api) { PuppetX::NetDev::EosApi.new }
 
   ##
   # api_response returns a JSON fixture that presents a representative REST API
@@ -43,8 +30,8 @@ describe PuppetX::NetDev::EosApi do
   context 'initializing the API instance' do
     [:address, :port, :username, :password].each do |option|
       it "initializes with #{option}" do
-        api = described_class.new(option => send(option))
-        expect(api.send(option)).to eq(send(option))
+        api = described_class.new(option => 'foo')
+        expect(api.send(option)).to eq('foo')
       end
     end
 
@@ -500,27 +487,14 @@ describe PuppetX::NetDev::EosApi do
   end
 
   describe '#uri' do
-    subject { api.uri.to_s }
-
     context 'with username and password' do
-      let :url do
-        "http://#{username}:#{password}@#{address}"
-      end
-      it { is_expected.to eq url }
+      subject { described_class.new(username: 'foo', password: 'bar').uri.to_s }
+      it { is_expected.to eq 'http://foo:bar@localhost' }
     end
 
     context 'without username and password' do
-      let(:config) do
-        {
-          address: 'foo.jeff.backline.puppetlabs.net',
-          port: 80
-        }
-      end
-      let :url do
-        'http://foo.jeff.backline.puppetlabs.net'
-      end
-
-      it { is_expected.to eq url }
+      subject { described_class.new(address: 'foo.lan', port: 90).uri.to_s }
+      it { is_expected.to eq 'http://admin:puppet@foo.lan:90' }
     end
   end
 

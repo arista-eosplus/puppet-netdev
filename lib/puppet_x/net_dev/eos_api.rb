@@ -49,11 +49,14 @@ module PuppetX
       #   server.
       #
       # @return [PuppetX::NetDev::EosApi]
+      #
+      # rubocop:disable Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/PerceivedComplexity
       def initialize(opts = {})
-        @address = opts[:address]
-        @port = opts[:port]
-        @username = opts[:username] || 'admin'
-        @password = opts[:password]
+        @address = opts[:address] || ENV['EOS_HOSTNAME'] || 'localhost'
+        @port = opts[:port] || ENV['EOS_PORT'] || 80
+        @username = opts[:username] || ENV['EOS_USERNAME'] || 'admin'
+        @password = opts[:password] || ENV['EOS_PASSWORD'] || 'puppet'
       end
 
       ##
@@ -700,11 +703,7 @@ module PuppetX
       #
       # @return [PuppetX::NetDev::EosApi] api instance
       def api
-        @api ||= PuppetX::NetDev::EosApi.new(
-          address: ENV['EOS_HOSTNAME'] || 'localhost',
-          port: ENV['EOS_PORT'] || 80,
-          username: ENV['EOS_USERNAME'] || 'admin',
-          password: ENV['EOS_PASSWORD'] || 'puppet')
+        @api ||= PuppetX::NetDev::EosApi.new
       end
 
       ##
