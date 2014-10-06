@@ -297,6 +297,23 @@ module PuppetX
       end
 
       ##
+      # set_portchannel_min_links Configures the minimum links value for a
+      # channel group.
+      #
+      # @param [String] name The port channel name, e.g 'Port-Channel4'.
+      #
+      # @param [Fixnum] min_links The minimum number of active links for the
+      #   channel group to be active.
+      #
+      # @api public
+      def set_portchannel_min_links(name, min_links)
+        cmd = %w(enable configure)
+        cmd << "interface #{name}"
+        cmd << "port-channel min-links #{min_links}"
+        eapi_action(cmd, 'set port-channel min links')
+      end
+
+      ##
       # parse_min_links takes the text from the `show running-config interfaces
       # Port-ChannelX` API command and parses out the currently configured
       # number of minimum links.  If there is no min-links value we (safely)

@@ -842,6 +842,27 @@ describe PuppetX::NetDev::EosApi do
     end
   end
 
+  describe '#set_portchannel_min_links' do
+    subject { api.set_portchannel_min_links(name, min_links) }
+    let(:name) { 'Port-Channel4' }
+    let(:expected) do
+      cmd = %w(enable configure) << "interface #{name}"
+      cmd << "port-channel min-links #{min_links}"
+    end
+
+    [0, 1, 2, 3].each do |val|
+      context "when min-links is #{val}" do
+        let(:min_links) { val }
+
+        it "calls eapi_action to set min links to #{val}" do
+          expect(api).to receive(:eapi_action)
+            .with(expected, 'set port-channel min links')
+          subject
+        end
+      end
+    end
+  end
+
   describe '#parse_min_links' do
     subject { api.parse_min_links(text) }
     context 'when text does not contain a min-links line' do

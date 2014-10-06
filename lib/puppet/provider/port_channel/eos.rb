@@ -116,6 +116,11 @@ Puppet::Type.type(:port_channel).provide(:eos) do
     @property_hash[:description] = value
   end
 
+  def minimum_links=(value)
+    api.set_portchannel_min_links(resource[:name], value)
+    @property_hash[:minimum_links] = value
+  end
+
   def speed=(value)
     @property_flush[:speed] = value
   end
