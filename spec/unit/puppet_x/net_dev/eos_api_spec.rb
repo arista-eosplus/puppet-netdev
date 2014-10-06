@@ -362,6 +362,7 @@ describe PuppetX::NetDev::EosApi do
         .and_return(fixture(:all_portchannels_detailed))
       allow(api).to receive(:all_portchannel_modes)
         .and_return(fixture(:all_portchannel_modes))
+      allow(api).to receive(:portchannel_min_links).and_return(2)
     end
 
     it { is_expected.to be_a Hash }
@@ -807,6 +808,50 @@ describe PuppetX::NetDev::EosApi do
           .and_return(api_response)
         api.set_interface_mtu('Ethernet1', 9000)
       end
+    end
+  end
+
+  describe '#portchannel_min_links' do
+    subject { api.portchannel_min_links(name) }
+
+    before :each do
+      api_commands = ['enable', "show running-config interfaces #{name}"]
+      msg = 'obtain port channel min links value'
+
+      allow(api).to receive(:eapi_action)
+        .with(api_commands, msg, format: 'text')
+        .and_return(fixture(fixture_name))
+    end
+
+    context 'min-links 2 in runnning-config' do
+      let(:name) { 'Port-Channel4' }
+      let(:fixture_name) { :portchannel_min_links_1 }
+
+      it 'returns 2 for the number of minimum links' do
+        is_expected.to eq(2)
+      end
+    end
+
+    context 'min-links not in runnning-config' do
+      let(:name) { 'Port-Channel9' }
+      let(:fixture_name) { :portchannel_min_links_2 }
+
+      it 'assumes and returns 0 for the number of minimum links' do
+        is_expected.to eq(0)
+      end
+    end
+  end
+
+  describe '#parse_min_links' do
+    subject { api.parse_min_links(text) }
+    context 'when text does not contain a min-links line' do
+      let(:text) { "interface Port-Channel4\n  description Office Backbone\n" }
+      it { is_expected.to eq(0) }
+    end
+
+    context 'when text contain min-links 2' do
+      let(:text) { "interface Port-Channel4\n  port-channel min-links 2\n" }
+      it { is_expected.to eq(2) }
     end
   end
 end

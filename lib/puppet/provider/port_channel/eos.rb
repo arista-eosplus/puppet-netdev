@@ -34,7 +34,8 @@ Puppet::Type.type(:port_channel).provide(:eos) do
         id: name.scan(/\d+/).first.to_i,
         ensure: :present,
         interfaces: attr_hash['ports'],
-        mode: attr_hash['mode']
+        mode: attr_hash['mode'],
+        minimum_links: attr_hash['minimum_links']
       }
       # Get the description of the portchannel interface
       provider_hash.merge! port_channel_attributes(interfaces[name])

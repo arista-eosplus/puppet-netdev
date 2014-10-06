@@ -274,7 +274,47 @@ module PuppetX
         # Merge the two
         detailed.each_with_object(Hash.new) do |(name, attr), hsh|
           hsh[name] = modes[name] ? attr.merge(modes[name]) : attr
+          hsh[name]['minimum_links'] = portchannel_min_links(name)
         end
+      end
+
+      ##
+      # portchannel_min_links takes the name of a Port Channel interface and
+      # obtains the currently configured min-links value by parsing the text of
+      # the running configuration.
+      #
+      # @api private
+      #
+      # @return [Fixnum] the minimum number of links for the channel group to
+      #   become active.
+      def portchannel_min_links(name)
+        api_commands = ['enable', "show running-config interfaces #{name}"]
+        result = eapi_action(api_commands,
+                             'obtain port channel min links value',
+                             format: 'text')
+        text = result[1]['output'] # skip over the enable command output.
+        parse_min_links(text)
+      end
+
+      ##
+      # parse_min_links takes the text from the `show running-config interfaces
+      # Port-ChannelX` API command and parses out the currently configured
+      # number of minimum links.  If there is no min-links value we (safely)
+      # assume it is configured to 0.  Example output is:
+      #
+      #     interface Port-Channel4
+      #       description Office Backbone
+      #       port-channel min-links 2
+      #
+      # @param [String] text The raw text output from the API.
+      #
+      # @api private
+      #
+      # @return [Fixnum] the number of minimum links
+      def parse_min_links(text)
+        re = /min-links\s+(\d+)/m
+        mdata = re.match(text)
+        mdata ? mdata[1].to_i : 0
       end
 
       ##

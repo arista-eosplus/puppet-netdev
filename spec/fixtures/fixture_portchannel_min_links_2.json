@@ -1,0 +1,8 @@
+[
+  {
+    "output": ""
+  },
+  {
+    "output": "interface Port-Channel9\n   description foobar\n"
+  }
+]
