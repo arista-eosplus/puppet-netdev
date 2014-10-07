@@ -913,6 +913,38 @@ Et1         off      unknown  off      unknown     0             0
       end
     end
   end
+
+  describe '#set_flowcontrol_send' do
+    subject { api.set_flowcontrol_send(name, value) }
+    let(:name) { 'Ethernet1' }
+    let(:value) { :on }
+    let(:expected) do
+      cmd = %w(enable configure) << "interface #{name}"
+      cmd << "flowcontrol send #{value}"
+    end
+
+    it 'calls eapi_action to configure the device' do
+      expect(api).to receive(:eapi_action)
+        .with(expected, 'configure flowcontrol send')
+      subject
+    end
+  end
+
+  describe '#set_flowcontrol_recv' do
+    subject { api.set_flowcontrol_recv(name, value) }
+    let(:name) { 'Ethernet1' }
+    let(:value) { :on }
+    let(:expected) do
+      cmd = %w(enable configure) << "interface #{name}"
+      cmd << "flowcontrol receive #{value}"
+    end
+
+    it 'calls eapi_action to configure the device' do
+      expect(api).to receive(:eapi_action)
+        .with(expected, 'configure flowcontrol receive')
+      subject
+    end
+  end
 end
 
 describe 'PuppetX::NetDev::EosProviderMethods' do

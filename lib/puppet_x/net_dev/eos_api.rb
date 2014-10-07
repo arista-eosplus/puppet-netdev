@@ -457,6 +457,38 @@ module PuppetX
       end
 
       ##
+      # set_flowcontrol_send Configures a specific interface's flow control
+      #   send value.
+      #
+      # @param [String] name The name of the interface to configure, e.g.
+      #   'Ethernet1'
+      #
+      # @param [Symbol] value the value to configure, e.g. `:on`, `:off`
+      #
+      # @api public
+      def set_flowcontrol_send(name, value)
+        cmd = %w(enable configure) << "interface #{name}"
+        cmd << "flowcontrol send #{value}"
+        eapi_action(cmd, 'configure flowcontrol send')
+      end
+
+      ##
+      # set_flowcontrol_recv Configures a specific interface's flow control
+      #   receive value.
+      #
+      # @param [String] name The name of the interface to configure, e.g.
+      #   'Ethernet1'
+      #
+      # @param [Symbol] value the value to configure, e.g. `:on`, `:off`
+      #
+      # @api public
+      def set_flowcontrol_recv(name, value)
+        cmd = %w(enable configure) << "interface #{name}"
+        cmd << "flowcontrol receive #{value}"
+        eapi_action(cmd, 'configure flowcontrol receive')
+      end
+
+      ##
       # all_interfaces returns a hash of all interfaces
       #
       # @api public

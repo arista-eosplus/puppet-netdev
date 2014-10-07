@@ -139,6 +139,16 @@ Puppet::Type.type(:port_channel).provide(:eos) do
     @property_hash[:minimum_links] = value
   end
 
+  def flowcontrol_send=(value)
+    interfaces.each { |name| api.set_flowcontrol_send(name, value) }
+    @property_hash[:flowcontrol_send] = value
+  end
+
+  def flowcontrol_receive=(value)
+    interfaces.each { |name| api.set_flowcontrol_recv(name, value) }
+    @property_hash[:flowcontrol_receive] = value
+  end
+
   def speed=(value)
     @property_flush[:speed] = value
   end
