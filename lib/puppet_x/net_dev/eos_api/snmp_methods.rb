@@ -87,6 +87,26 @@ module PuppetX
           contact = result.first['contact']
           { contact: contact }
         end
+
+        ##
+        # snmp_enable= disables or enables SNMP
+        #
+        # @param [Boolean] state enable SNMP if true, disable if false.
+        #
+        # @api public
+        def snmp_enable=(state)
+          cmd = %w(enable configure)
+          case state
+          when true
+            cmd << 'snmp-server community public ro'
+          when false
+            cmd << 'no snmp-server'
+          else
+            fail ArgumentError, "invalid state #{state.inspect}"
+          end
+
+          eapi_action(cmd, 'configure snmp') && true || false
+        end
       end
     end
   end

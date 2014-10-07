@@ -144,4 +144,35 @@ describe PuppetX::NetDev::EosApi do
       end
     end
   end
+
+  describe '#snmp_enable=(state)' do
+    context 'when state is true' do
+      subject { api.snmp_enable = true }
+      let(:expected) { 'snmp-server community public ro' }
+
+      it 'enables snmp by setting a public community string to ro' do
+        expect(api).to receive(:eapi_action)
+          .with(['enable', 'configure', expected], 'configure snmp')
+          .and_return([{}, {}, {}])
+        subject
+      end
+    end
+
+    context 'when state is false' do
+      subject { api.snmp_enable = false }
+      let(:expected) { 'no snmp-server' }
+
+      it 'disables snmp by setting no snmp-server' do
+        expect(api).to receive(:eapi_action)
+          .with(['enable', 'configure', expected], 'configure snmp')
+          .and_return([{}, {}, {}])
+        subject
+      end
+    end
+
+    context 'when state is :garbage' do
+      subject { api.snmp_enable = :garbage }
+      it { expect { subject }.to raise_error ArgumentError, /invalid state/ }
+    end
+  end
 end

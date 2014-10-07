@@ -27,8 +27,16 @@ Puppet::Type.type(:network_snmp).provide(:eos) do
     [new(provider_hash)]
   end
 
+  ##
+  # enable SNMP by setting the "public" community string to "ro"
   def enable=(value)
-    fail NotImplementedError, 'not implemented'
+    case value
+    when :true
+      api.snmp_enable = true
+    when :false
+      api.snmp_enable = false
+    end
+    @property_hash[:enable] = value
   end
 
   def contact=(value)
@@ -48,10 +56,6 @@ Puppet::Type.type(:network_snmp).provide(:eos) do
   end
 
   def destroy
-    fail NotImplementedError, 'not implemented'
-  end
-
-  def flush
     fail NotImplementedError, 'not implemented'
   end
 end
