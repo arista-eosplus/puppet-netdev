@@ -45,7 +45,8 @@ Puppet::Type.type(:network_snmp).provide(:eos) do
   end
 
   def location=(value)
-    fail NotImplementedError, 'not implemented'
+    api.snmp_location = value
+    @property_hash[:location] = value
   end
 
   def exists?

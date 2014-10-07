@@ -186,4 +186,15 @@ describe PuppetX::NetDev::EosApi do
       subject
     end
   end
+
+  describe '#snmp_location=(location)' do
+    subject { api.snmp_location = 'Planet Earth' }
+    it 'sets the contact using snmp-server location Planet Earth' do
+      expect(api).to receive(:eapi_action)
+        .with(['enable', 'configure', 'snmp-server location Planet Earth'],
+              'set snmp location')
+        .and_return([{}, {}, {}])
+      subject
+    end
+  end
 end

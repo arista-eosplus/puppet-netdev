@@ -113,13 +113,27 @@ module PuppetX
         #
         # @param [String] contact The contact name, e.g. 'Jane Doe'
         #
-        # @api private
+        # @api public
         #
         # @return [Boolean] true or false
         def snmp_contact=(contact)
           cmd = %w(enable configure)
           cmd << "snmp-server contact #{contact}"
           eapi_action(cmd, 'set snmp contact') && true || false
+        end
+
+        ##
+        # snmp_location= updates the SNMP location on the target device.
+        #
+        # @param [String] location The location, e.g. 'Planet Earth'
+        #
+        # @api public
+        #
+        # @return [Boolean] true or false
+        def snmp_location=(location)
+          cmd = %w(enable configure)
+          cmd << "snmp-server location #{location}"
+          eapi_action(cmd, 'set snmp location') && true || false
         end
       end
     end
