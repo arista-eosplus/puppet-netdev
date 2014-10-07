@@ -25,9 +25,6 @@ Puppet::Type.type(:port_channel).provide(:eos) do
     # synchronize them.
     interfaces = api.all_interfaces
     api.all_portchannels.map do |name, attr_hash|
-      # FIXME: Need to populate
-      # flowcontrol_send (desired | off | on)
-      # flowcontrol_receive (desired | off | on)
       channel_ports = attr_hash['ports']
       provider_hash = {
         name: name,
@@ -57,6 +54,27 @@ Puppet::Type.type(:port_channel).provide(:eos) do
       end
       speed  = speed_count.sort_by { |_key, value| value }.first.first
       provider_hash[:speed] = speed
+
+      # Get the flowcontrol status from all of the member interfaces
+      flowcontrol = channel_ports.each_with_object(Hash.new) do |port, hsh|
+        hsh[port] = api.get_flowcontrol(port)
+      end
+
+      # Get the least common flow_control send value
+      send_count = channel_ports.each_with_object(Hash.new(0)) do |port, hsh|
+        value = flowcontrol[port][:send]
+        hsh[value] += 1
+      end
+      send = send_count.sort_by { |_key, value| value }.first.first
+      provider_hash[:flowcontrol_send] = send
+
+      # Get the least common flow_control send value
+      recv_count = channel_ports.each_with_object(Hash.new(0)) do |port, hsh|
+        value = flowcontrol[port][:receive]
+        hsh[value] += 1
+      end
+      recv = recv_count.sort_by { |_key, value| value }.first.first
+      provider_hash[:flowcontrol_receive] = recv
 
       new(provider_hash)
     end

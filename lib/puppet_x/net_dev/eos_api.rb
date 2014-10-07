@@ -416,6 +416,47 @@ module PuppetX
       end
 
       ##
+      # get_flowcontrol obtains the configured flow_control send and receive
+      # values from the target device.
+      #
+      # @param [String] name The interface name, e.g. 'Ethernet1'
+      #
+      # @api public
+      #
+      # @return [Hash<Symbol,String>] e.g. { send: 'on', receive: 'off' }
+      def get_flowcontrol(name)
+        cmd = "show flowcontrol interface #{name}"
+        result = eapi_action(cmd, 'get flowcontrol config', format: 'text')
+        text = result.first['output']
+        parse_flowcontrol_single(text)
+      end
+
+      ##
+      # parse_flowcontrol_single parses the text output of the `show
+      # flowcontrol <interface>` command where there is a single entry for the
+      # named interface.
+      #
+      #    Port        Send FlowControl  Receive FlowControl  RxPause       TxPause
+      #                admin    oper     admin    oper
+      #    ----------  -------- -------- -------- --------    ------------- -------------
+      #    Et1         off      unknown  off      unknown     0             0
+      #
+      # @param [String] text The text to parse
+      #
+      # @api private
+      #
+      # @return [Hash<Symbol,String>] e.g. { send: 'on', receive: 'off' }
+      def parse_flowcontrol_single(text)
+        re = /----\n(.*?)\s+(.*?)\s+.*?\s+(.*?)\s+.*\n/m
+        mdata = re.match(text)
+        if mdata
+          { send: mdata[2], receive: mdata[3] }
+        else
+          fail ArgumentError, 'could not parse flowcontrol'
+        end
+      end
+
+      ##
       # all_interfaces returns a hash of all interfaces
       #
       # @api public

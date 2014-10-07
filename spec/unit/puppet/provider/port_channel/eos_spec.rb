@@ -40,6 +40,8 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
         .and_return(fixture(:api_all_portchannels))
       allow(described_class.api).to receive(:all_interfaces)
         .and_return(fixture(:api_all_interfaces))
+      allow(described_class.api).to receive(:get_flowcontrol)
+        .and_return(send: 'off', receive: 'off')
     end
 
     describe '.instances' do

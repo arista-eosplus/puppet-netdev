@@ -875,6 +875,44 @@ describe PuppetX::NetDev::EosApi do
       it { is_expected.to eq(2) }
     end
   end
+
+  describe '#get_flowcontrol' do
+    subject { api.get_flowcontrol(name) }
+    let(:name) { 'Ethernet1' }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show flowcontrol interface Ethernet1',
+              'get flowcontrol config',
+              format: 'text')
+        .and_return(fixture(:show_flowcontrol_et1))
+    end
+    it { is_expected.to eq(send: 'off', receive: 'off') }
+  end
+
+  describe '#parse_flowcontrol_single' do
+    subject { api.parse_flowcontrol_single(text) }
+
+    context 'when the input text is valid' do
+      let(:text) do
+        <<-TEXT
+Port        Send FlowControl  Receive FlowControl  RxPause       TxPause
+            admin    oper     admin    oper
+----------  -------- -------- -------- --------    ------------- -------------
+Et1         off      unknown  off      unknown     0             0
+        TEXT
+      end
+
+      it { is_expected.to eq(send: 'off', receive: 'off') }
+    end
+
+    context 'when the input text is invalid' do
+      let(:text) { 'garbage' }
+      it 'raises ArgumentError' do
+        expect { subject }.to raise_error ArgumentError, /could not parse/
+      end
+    end
+  end
 end
 
 describe 'PuppetX::NetDev::EosProviderMethods' do
