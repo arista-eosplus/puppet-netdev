@@ -107,6 +107,20 @@ module PuppetX
 
           eapi_action(cmd, 'configure snmp') && true || false
         end
+
+        ##
+        # snmp_contact= updates the SNMP contact on the target device.
+        #
+        # @param [String] contact The contact name, e.g. 'Jane Doe'
+        #
+        # @api private
+        #
+        # @return [Boolean] true or false
+        def snmp_contact=(contact)
+          cmd = %w(enable configure)
+          cmd << "snmp-server contact #{contact}"
+          eapi_action(cmd, 'set snmp contact') && true || false
+        end
       end
     end
   end

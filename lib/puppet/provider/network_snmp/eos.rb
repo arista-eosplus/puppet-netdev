@@ -40,7 +40,8 @@ Puppet::Type.type(:network_snmp).provide(:eos) do
   end
 
   def contact=(value)
-    fail NotImplementedError, 'not implemented'
+    api.snmp_contact = value
+    @property_hash[:contact] = value
   end
 
   def location=(value)

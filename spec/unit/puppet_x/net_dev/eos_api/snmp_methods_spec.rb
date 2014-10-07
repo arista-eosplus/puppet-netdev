@@ -175,4 +175,15 @@ describe PuppetX::NetDev::EosApi do
       it { expect { subject }.to raise_error ArgumentError, /invalid state/ }
     end
   end
+
+  describe '#snmp_contact=(contact)' do
+    subject { api.snmp_contact = 'Jane Doe' }
+    it 'sets the contact using snmp-server contact Jane Doe' do
+      expect(api).to receive(:eapi_action)
+        .with(['enable', 'configure', 'snmp-server contact Jane Doe'],
+              'set snmp contact')
+        .and_return([{}, {}, {}])
+      subject
+    end
+  end
 end
