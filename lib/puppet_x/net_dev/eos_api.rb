@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'net_http_unix'
+require 'puppet_x/net_dev/eos_api/snmp_methods'
 
 ##
 # PuppetX is where utility extensions live.
@@ -27,6 +28,9 @@ module PuppetX
       attr_reader :username
       # API password
       attr_reader :password
+
+      # Include type specific methods, broken out for clear organization.
+      include SnmpMethods
 
       ##
       # initialize an API instance.  The API will communicate with the HTTP
