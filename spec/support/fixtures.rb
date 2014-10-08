@@ -1,5 +1,9 @@
 # encoding: utf-8
 
+require 'pathname'
+require 'yaml'
+require 'json'
+
 ##
 # Fixtures implements a global container to store fixture data loaded from the
 # filesystem.
@@ -32,9 +36,9 @@ class Fixtures
   #   module.
   def self.save(key, obj, opts = {})
     dir = opts[:dir] || File.expand_path('../../fixtures', __FILE__)
-    File.open(File.join(dir, "fixture_#{key}.json"), 'w+') do |f|
-      f.puts JSON.pretty_generate(obj)
-    end
+    file = Pathname.new(File.join(dir, "fixture_#{key}.yaml"))
+    fail ArgumentError, "Error, file #{file} exists" if file.exist?
+    File.open(file, 'w+') { |f| f.puts YAML.dump(obj) }
   end
 end
 
@@ -55,10 +59,19 @@ module FixtureHelpers
   #   defaults to the full path of spec/fixtures/ relative to the root of the
   #   module.
   def fixture(key, opts = {})
-    dir = opts[:dir] || File.expand_path('../../fixtures', __FILE__)
     memo = Fixtures[key]
     return memo if memo
-    file = File.join(dir, "fixture_#{key}.json")
-    Fixtures[key] = JSON.load(File.read(file))
+    dir = opts[:dir] || File.expand_path('../../fixtures', __FILE__)
+
+    yaml = Pathname.new(File.join(dir, "fixture_#{key}.yaml"))
+    json = Pathname.new(File.join(dir, "fixture_#{key}.json"))
+
+    if yaml.exist?
+      Fixtures[key] = YAML.load(File.read(yaml))
+    elsif json.exist?
+      Fixtures[key] = JSON.load(File.read(json))
+    else
+      fail "could not load YAML or JSON fixture #{key}"
+    end
   end
 end
