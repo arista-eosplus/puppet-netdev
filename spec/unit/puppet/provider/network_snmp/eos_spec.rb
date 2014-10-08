@@ -7,7 +7,6 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
 
   let :resource do
     resource_hash = {
-      ensure: :present,
       name: 'settings',
       enable: :true,
       location: 'Planet Earth',
@@ -43,7 +42,6 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
 
         include_examples 'provider resource methods',
           name: 'settings',
-          ensure: :present,
           enable: :true,
           contact: 'Jane Doe',
           location: 'Planet Earth',
@@ -56,9 +54,9 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
       subject { described_class.prefetch(resources) }
 
       it 'updates the provider instance of managed resources' do
-        expect(resources['settings'].provider.ensure).to eq(:absent)
+        expect(resources['settings'].provider.contact).to eq(:absent)
         subject
-        expect(resources['settings'].provider.ensure).to eq(:present)
+        expect(resources['settings'].provider.contact).to eq('Jane Doe')
       end
     end
 

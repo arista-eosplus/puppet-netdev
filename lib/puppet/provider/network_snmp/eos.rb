@@ -52,12 +52,4 @@ Puppet::Type.type(:network_snmp).provide(:eos) do
   def exists?
     @property_hash[:ensure] == :present
   end
-
-  def create
-    fail NotImplementedError, 'not implemented'
-  end
-
-  def destroy
-    fail NotImplementedError, 'not implemented'
-  end
 end
