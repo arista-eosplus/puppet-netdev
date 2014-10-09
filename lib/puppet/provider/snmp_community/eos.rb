@@ -14,14 +14,29 @@ Puppet::Type.type(:snmp_community).provide(:eos) do
   # Mix in common provider class methods (e.g. self.prefetch)
   extend PuppetX::NetDev::EosProviderClassMethods
 
+  def self.instances
+    communities = api.snmp_communities
+    communities.each { |hsh| hsh[:ensure] = :present }
+    communities.map { |resource_hash| new(resource_hash) }
+  end
+
   def initialize(resource = {})
     super(resource)
     @property_flush = {}
   end
 
-  def self.instances
-    communities = api.snmp_communities
-    communities.map { |resource_hash| new(resource_hash) }
+  def exists?
+    @property_hash[:ensure] == :present
+  end
+
+  def create
+    allowed_keys = [:name, :group, :acl]
+    property_hash = resource.to_hash.select do |key, _|
+      allowed_keys.include? key
+    end
+    api.snmp_community_create(property_hash)
+    @property_hash = property_hash
+    @property_hash[:ensure] = :present
   end
 
   def group=(value)

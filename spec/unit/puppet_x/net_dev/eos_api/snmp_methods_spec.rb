@@ -242,4 +242,60 @@ describe PuppetX::NetDev::EosApi do
       it { is_expected.to include(name: 'private', group: 'rw') }
     end
   end
+
+  describe '#snmp_community_create' do
+    subject { api.snmp_community_create(resource_hash) }
+    let(:prefix) { %w(enable configure) }
+
+    context 'when the api call succeeds' do
+      before :each do
+        allow(api).to receive(:eapi_action).and_return(true)
+      end
+
+      let :resource_hash do
+        { name: 'public', group: :ro, acl: 'stest1' }
+      end
+
+      it { is_expected.to eq(true) }
+    end
+
+    context 'group and acl are both set' do
+      let :resource_hash do
+        { name: 'public', group: :ro, acl: 'stest1' }
+      end
+
+      it 'sets the group and the acl in that positional order' do
+        expected = 'snmp-server community public ro stest1'
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, expected], 'create snmp community')
+        subject
+      end
+    end
+
+    context 'group is set, acl is not set' do
+      let :resource_hash do
+        { name: 'public', group: :ro }
+      end
+
+      it 'sets the group and not the acl' do
+        expected = 'snmp-server community public ro'
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, expected], 'create snmp community')
+        subject
+      end
+    end
+
+    context 'group is not set, acl is set' do
+      let :resource_hash do
+        { name: 'public', acl: 'stest1' }
+      end
+
+      it 'sets the acl and not the group' do
+        expected = 'snmp-server community public stest1'
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, expected], 'create snmp community')
+        subject
+      end
+    end
+  end
 end
