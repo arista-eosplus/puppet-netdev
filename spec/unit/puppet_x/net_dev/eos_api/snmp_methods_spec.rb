@@ -197,4 +197,22 @@ describe PuppetX::NetDev::EosApi do
       subject
     end
   end
+
+  describe '#snmp_communities' do
+    subject { api.snmp_communities }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show snmp community', 'get snmp communities', format: 'text')
+        .and_return(fixture(:show_snmp_community))
+    end
+
+    it { is_expected.to be_an Array }
+    it 'is expected to have 3 results' do
+      expect(subject.size).to eq(3)
+    end
+    it { is_expected.to include(name: 'jeff', group: 'rw', acl: 'stest1') }
+    it { is_expected.to include(name: 'public', group: 'ro') }
+    it { is_expected.to include(name: 'private', group: 'rw') }
+  end
 end
