@@ -204,15 +204,42 @@ describe PuppetX::NetDev::EosApi do
     before :each do
       allow(api).to receive(:eapi_action)
         .with('show snmp community', 'get snmp communities', format: 'text')
-        .and_return(fixture(:show_snmp_community))
+        .and_return(example_api_response)
     end
 
-    it { is_expected.to be_an Array }
-    it 'is expected to have 3 results' do
-      expect(subject.size).to eq(3)
+    describe 'structure of the return object' do
+      let(:example_api_response) { fixture(:show_snmp_community) }
+
+      it { is_expected.to be_an Array }
+      it 'is expected to have 3 results' do
+        expect(subject.size).to eq(3)
+      end
     end
-    it { is_expected.to include(name: 'jeff', group: 'rw', acl: 'stest1') }
-    it { is_expected.to include(name: 'public', group: 'ro') }
-    it { is_expected.to include(name: 'private', group: 'rw') }
+
+    context 'when there is a community with an existing acl' do
+      let(:example_api_response) { fixture(:show_snmp_community) }
+
+      it { is_expected.to include(name: 'jeff', group: 'rw', acl: 'stest1') }
+      it { is_expected.to include(name: 'public', group: 'ro') }
+      it { is_expected.to include(name: 'private', group: 'rw') }
+    end
+
+    context 'when there is a community with a non-existent acl' do
+      let(:example_api_response) do
+        fixture(:get_snmp_communities_non_existent_acl)
+      end
+
+      it 'has 6 results' do
+        expect(subject.size).to eq(6)
+      end
+      it { is_expected.to include(name: 'jeff', group: 'rw', acl: 'stest1') }
+      it { is_expected.to include(name: 'jeff2', group: 'ro', acl: 'stest1') }
+      it { is_expected.to include(name: 'jeff3', group: 'ro', acl: 'stest1') }
+      it 'parses "Access list: stest2 (non-existent)" as stest2' do
+        expect(subject).to include(name: 'jeff4', group: 'ro', acl: 'stest2')
+      end
+      it { is_expected.to include(name: 'public', group: 'ro') }
+      it { is_expected.to include(name: 'private', group: 'rw') }
+    end
   end
 end

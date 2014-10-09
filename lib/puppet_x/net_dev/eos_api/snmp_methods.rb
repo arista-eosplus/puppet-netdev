@@ -164,6 +164,10 @@ module PuppetX
         # Community access: read-write
         # Access list: stest1
         #
+        # Community name: jeff2
+        # Community access: read-write
+        # Access list: stest2 (non-existent)
+        #
         # Community name: private
         # Community access: read-write
         #
@@ -178,8 +182,10 @@ module PuppetX
         # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
         def parse_snmp_communities(text)
           blocks = text.split("\n\n")
-          # Array of Array of Key/Value pairs
-          communities = blocks.map { |l| l.scan(/ (\w+): (\w.*?)(?:\n|$)/) }
+          # (?:\s*\(.*?\)|\n|$) deals with trailing data after the value.  e.g.
+          # an ACL might come back as `Access list: stest2 (non-existent)`
+          regexp = / (\w+): (\w.*?)(?:\s*\(.*?\)|\n|$)/
+          communities = blocks.map { |l| l.scan(regexp) }
           communities.map do |pairs|
             pairs.each_with_object({}) do |(key, val), resource_hash|
               resource_hash.merge!(map_snmp_keys(key, val))
