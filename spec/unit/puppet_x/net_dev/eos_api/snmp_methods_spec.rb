@@ -243,8 +243,8 @@ describe PuppetX::NetDev::EosApi do
     end
   end
 
-  describe '#snmp_community_create' do
-    subject { api.snmp_community_create(resource_hash) }
+  describe '#snmp_community_set' do
+    subject { api.snmp_community_set(resource_hash) }
     let(:prefix) { %w(enable configure) }
 
     context 'when the api call succeeds' do
@@ -267,7 +267,7 @@ describe PuppetX::NetDev::EosApi do
       it 'sets the group and the acl in that positional order' do
         expected = 'snmp-server community public ro stest1'
         expect(api).to receive(:eapi_action)
-          .with([*prefix, expected], 'create snmp community')
+          .with([*prefix, expected], 'define snmp community')
         subject
       end
     end
@@ -280,7 +280,7 @@ describe PuppetX::NetDev::EosApi do
       it 'sets the group and not the acl' do
         expected = 'snmp-server community public ro'
         expect(api).to receive(:eapi_action)
-          .with([*prefix, expected], 'create snmp community')
+          .with([*prefix, expected], 'define snmp community')
         subject
       end
     end
@@ -293,7 +293,36 @@ describe PuppetX::NetDev::EosApi do
       it 'sets the acl and not the group' do
         expected = 'snmp-server community public stest1'
         expect(api).to receive(:eapi_action)
-          .with([*prefix, expected], 'create snmp community')
+          .with([*prefix, expected], 'define snmp community')
+        subject
+      end
+    end
+  end
+
+  describe '#snmp_community_destroy' do
+    subject { api.snmp_community_destroy(resource_hash) }
+    let(:prefix) { %w(enable configure) }
+
+    let :resource_hash do
+      { name: 'public' }
+    end
+
+    context 'when the api call succeeds' do
+      before :each do
+        allow(api).to receive(:eapi_action).and_return(true)
+      end
+
+      it { is_expected.to eq(true) }
+    end
+
+    describe 'expected REST API call' do
+      it 'calls eapi_action with []' do
+        expected = [[*prefix, 'no snmp-server community public'],
+                    'destroy snmp community']
+        expect(api).to receive(:eapi_action)
+          .with(*expected)
+          .and_return(true)
+
         subject
       end
     end

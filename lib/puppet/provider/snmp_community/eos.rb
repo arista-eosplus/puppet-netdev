@@ -30,22 +30,35 @@ Puppet::Type.type(:snmp_community).provide(:eos) do
   end
 
   def create
-    allowed_keys = [:name, :group, :acl]
-    property_hash = resource.to_hash.select do |key, _|
-      allowed_keys.include? key
+    @property_flush = resource.to_hash.select do |key, _|
+      [:name, :group, :acl].include? key
     end
-    api.snmp_community_create(property_hash)
-    @property_hash = property_hash
-    @property_hash[:ensure] = :present
+    @property_flush[:ensure] = :present
+  end
+
+  def destroy
+    @property_flush = { name: name, ensure: :absent }
   end
 
   def group=(value)
-    fail NotImplementedError, 'not implemented'
-    @property_hash[:group] = value
+    @property_flush[:group] = value
   end
 
   def acl=(value)
-    fail NotImplementedError, 'not implemented'
-    @property_hash[:acl] = value
+    @property_flush[:acl] = value
+  end
+
+  def flush
+    new_property_hash = @property_hash.merge(@property_flush)
+    new_property_hash[:name] = name
+
+    case new_property_hash[:ensure]
+    when :absent, 'absent'
+      api.snmp_community_destroy(name: name)
+    else
+      api.snmp_community_set(new_property_hash)
+    end
+
+    @property_hash = new_property_hash
   end
 end
