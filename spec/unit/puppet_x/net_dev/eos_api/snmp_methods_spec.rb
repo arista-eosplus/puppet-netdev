@@ -327,4 +327,26 @@ describe PuppetX::NetDev::EosApi do
       end
     end
   end
+
+  describe '#snmp_notifications' do
+    subject { api.snmp_notifications }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show snmp trap', 'get snmp traps', format: 'text')
+        .and_return(fixture(:show_snmp_trap))
+    end
+
+    it { is_expected.to be_an Array }
+    it 'parses 23 resources' do
+      expect(subject.size).to eq(23)
+    end
+    describe 'disabled notifications' do
+      it 'includes msdp backward-transition' do
+        expect(subject).to include(name: 'msdp backward-transition',
+                                   enable: :false)
+      end
+      it { is_expected.to include(name: 'pim neighbor-loss', enable: :false) }
+    end
+  end
 end

@@ -252,6 +252,42 @@ module PuppetX
           result = eapi_action([*prefix, cmd], 'destroy snmp community')
           result && true || false
         end
+
+        ##
+        # snmp_notifications returns an Array of resource hashes suitable for
+        # initializing new provider resources.
+        #
+        # @api public
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def snmp_notifications
+          cmd = 'show snmp trap'
+          result = eapi_action(cmd, 'get snmp traps', format: 'text')
+          text = result.first['output']
+          parse_snmp_traps(text)
+        end
+
+        ##
+        # parse_snmp_traps takes the raw text output of the `show snmp trap`
+        # command and parses the data into hases suitable for new provider
+        # instances.
+        #
+        # @param [String] text The raw text to process.
+        #
+        # @api private
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def parse_snmp_traps(text)
+          regexp = /(\w+)\s+([-_\w]+)\s+(\w+).*$/
+          triples = text.scan(regexp)
+          triples.shift # Header
+          triples.map do |triple|
+            {
+              name: format('%s %s', *triple),
+              enable: /yes/xi.match(triple[2]) ? :true : :false
+            }
+          end
+        end
       end
     end
   end
