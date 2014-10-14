@@ -288,6 +288,29 @@ module PuppetX
             }
           end
         end
+
+        ##
+        # snmp_notification_set configures a SNMP trap notification on the
+        # target device.
+        #
+        # @option opts [String] :name ('snmp link-down') The trap name with the
+        #   type name as a prefix separated by a space.  The special name 'all'
+        #   will enable or disable all notifications.
+        #
+        # @option opts [Symbol] :enable (:true) :true to enable the
+        #   notification, :false to disable the notification.
+        #
+        # @api public
+        #
+        # @return [Boolean] true if successful
+        def snmp_notification_set(opts)
+          prefix = %w(enable configure)
+          pre = opts[:enable] == :true ? '' : 'no '
+          suffix = opts[:name] == 'all' ? '' : " #{opts[:name]}"
+          cmd = pre << 'snmp-server enable traps' << suffix
+          result = eapi_action([*prefix, cmd], 'set snmp trap')
+          result && true || false
+        end
       end
     end
   end

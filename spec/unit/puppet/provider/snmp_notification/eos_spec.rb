@@ -12,7 +12,7 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
 
   let :resource_hash do
     {
-      name: 'all',
+      name: 'snmp link-down',
       enable: :true
     }.merge(resource_override)
   end
@@ -32,6 +32,31 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
       it { is_expected.to be_an Array }
       it 'returns 23 instances' do
         expect(subject.size).to eq(23)
+      end
+    end
+
+    describe '.flush' do
+      context 'after enable = :true' do
+        subject do
+          provider.enable = :true
+          provider.flush
+        end
+
+        it 'calls snmp_notification_set' do
+          expect(provider.api).to receive(:snmp_notification_set)
+            .with(resource_hash)
+          subject
+        end
+
+        context 'stubbed REST API' do
+          before :each do
+            allow(provider.api).to receive(:eapi_action)
+              .with(Array, 'set snmp trap')
+              .and_return([{}, {}, {}])
+          end
+
+          it { is_expected.to eq(resource_hash) }
+        end
       end
     end
   end

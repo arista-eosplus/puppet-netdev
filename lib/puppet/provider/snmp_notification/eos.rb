@@ -19,6 +19,17 @@ Puppet::Type.type(:snmp_notification).provide(:eos) do
     notifications.map { |resource_hash| new(resource_hash) }
   end
 
+  def enable=(value)
+    @property_flush[:enable] = value
+  end
+
+  def flush
+    new_property_hash = @property_hash.merge(@property_flush)
+    new_property_hash[:name] = name
+    api.snmp_notification_set(new_property_hash)
+    @property_hash = new_property_hash
+  end
+
   def initialize(resource = {})
     super(resource)
     @property_flush = {}
