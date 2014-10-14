@@ -420,4 +420,52 @@ describe PuppetX::NetDev::EosApi do
       end
     end
   end
+
+  describe '#snmp_notification_receivers' do
+    subject { api.snmp_notification_receivers }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show snmp host', 'get snmp notification hosts', format: 'text')
+        .and_return(fixture(:show_snmp_host))
+    end
+
+    it { is_expected.to be_an Array }
+    it 'has 4 elements' do
+      expect(subject.size).to eq(4)
+    end
+    it 'includes 127.0.0.1' do
+      expect(subject).to include(name: '127.0.0.1',
+                                 ensure: :present,
+                                 port: 162,
+                                 type: :traps,
+                                 username: 'public',
+                                 version: 'v3',
+                                 security: 'noauth')
+    end
+    it 'includes 127.0.0.2' do
+      expect(subject).to include(name: '127.0.0.2',
+                                 ensure: :present,
+                                 port: 162,
+                                 type: :traps,
+                                 version: 'v2c',
+                                 community: 'private')
+    end
+    it 'includes 127.0.0.3' do
+      expect(subject).to include(name: '127.0.0.3',
+                                 ensure: :present,
+                                 port: 162,
+                                 type: :traps,
+                                 version: 'v1',
+                                 community: 'public')
+    end
+    it 'includes 127.0.0.4' do
+      expect(subject).to include(name: '127.0.0.4',
+                                 ensure: :present,
+                                 port: 10_162,
+                                 type: :informs,
+                                 version: 'v2c',
+                                 community: 'private')
+    end
+  end
 end

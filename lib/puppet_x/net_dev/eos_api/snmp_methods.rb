@@ -311,6 +311,62 @@ module PuppetX
           result = eapi_action([*prefix, cmd], 'set snmp trap')
           result && true || false
         end
+
+        ##
+        # snmp_notification_receivers obtains a list of all the snmp
+        # notification receivers and returns them as an Array of resource
+        # hashes suitable for the provider's new class method.  This command
+        # maps the `show snmp host` command to an array of resource hashes.
+        #
+        # @api public
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def snmp_notification_receivers
+          cmd = 'show snmp host'
+          msg = 'get snmp notification hosts'
+          result = eapi_action(cmd, msg, format: 'text')
+          text = result.first['output']
+          parse_snmp_hosts(text)
+        end
+
+        ##
+        # parse_snmp_hosts parses the raw text from the `show snmp host`
+        # command and returns an Array of resource hashes.
+        #
+        # rubocop:disable Metrics/MethodLength
+        #
+        # @param [String] text The text of the `show snmp host` output, e.g.
+        #   for three hosts:
+        #
+        #   ```
+        #   Notification host: 127.0.0.1       udp-port: 162   type: trap
+        #   user: public                       security model: v3 noauth
+        #
+        #   Notification host: 127.0.0.2       udp-port: 162   type: trap
+        #   user: private                      security model: v2c
+        #
+        #   Notification host: 127.0.0.3       udp-port: 162   type: trap
+        #   user: public                       security model: v1
+        #
+        #   ```
+        #
+        # @api private
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def parse_snmp_hosts(text)
+          re = /host: ([^\s]+)\s+.*?port: (\d+)\s+type: (\w+)\s*user: (.*?)\s+security model: (.*?)\n/m # rubocop:disable Metrics/LineLength
+          text.scan(re).map do |(host, port, type, username, auth)|
+            resource_hash = { name: host, ensure: :present, port: port.to_i }
+            sec_match = /^v3 (\w+)/.match(auth)
+            resource_hash[:security] = sec_match[1] if sec_match
+            ver_match = /^(v\w+)/.match(auth)
+            resource_hash[:version] = ver_match[1] if ver_match
+            resource_hash[:type] = /trap/.match(type) ? :traps : :informs
+            resource_hash[:username] = username if /^v3/.match(auth)
+            resource_hash[:community] = username unless /^v3/.match(auth)
+            resource_hash
+          end
+        end
       end
     end
   end
