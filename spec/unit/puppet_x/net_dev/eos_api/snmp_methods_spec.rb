@@ -522,4 +522,84 @@ describe PuppetX::NetDev::EosApi do
       end
     end
   end
+
+  describe '#snmp_notification_receiver_set' do
+    subject { api.snmp_notification_receiver_set(resource_hash) }
+
+    context 'when traps v3 noauth' do
+      let(:resource_override) { {} }
+      let :resource_hash do
+        {
+          ensure: :present,
+          name: '127.0.0.1',
+          port: 162,
+          type: :informs,
+          version: :v3,
+          username: 'snmpuser',
+          security: :auth
+        }.merge(resource_override)
+      end
+
+      let :expected do
+        'snmp-server host 127.0.0.1 informs version 3 '\
+        'auth snmpuser udp-port 162'
+      end
+
+      it 'configures snmp-server host ... on the target device' do
+        expect(api).to receive(:eapi_action)
+          .with(['enable', 'configure', expected], 'set snmp host')
+        subject
+      end
+
+      context 'when :name contains colons' do
+        let :resource_override do
+          { name: '127.0.0.1:snmpuser:162:v3:informs:auth' }
+        end
+
+        it 'uses the first component for name' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', expected], 'set snmp host')
+          subject
+        end
+      end
+
+      context 'when :version is :v3' do
+        it 'sets security after version (not username)' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /3 auth snmpuser/], 'set snmp host')
+          subject
+        end
+      end
+
+      context 'when :version is :v2c' do
+        let :resource_override do
+          { version: :v2c, username: nil, community: 'public' }
+        end
+
+        it 'sets the version to "2c"' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /version 2c/], 'set snmp host')
+          subject
+        end
+
+        it 'sets community after version (not security)' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /2c public/], 'set snmp host')
+          subject
+        end
+      end
+
+      context 'when :type is nil' do
+        let :resource_override do
+          { type: nil }
+        end
+
+        it 'sets the type to traps' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /127.0.0.1 traps /], 'set snmp host')
+          subject
+        end
+      end
+    end
+  end
 end
