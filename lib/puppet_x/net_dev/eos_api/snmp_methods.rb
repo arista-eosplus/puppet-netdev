@@ -342,11 +342,26 @@ module PuppetX
         #   Notification host: 127.0.0.1       udp-port: 162   type: trap
         #   user: public                       security model: v3 noauth
         #
+        #   Notification host: 127.0.0.1       udp-port: 162   type: trap
+        #   user: smtpuser                     security model: v3 auth
+        #
         #   Notification host: 127.0.0.2       udp-port: 162   type: trap
         #   user: private                      security model: v2c
         #
         #   Notification host: 127.0.0.3       udp-port: 162   type: trap
         #   user: public                       security model: v1
+        #
+        #   Notification host: 127.0.0.4       udp-port: 10162 type: inform
+        #   user: private                      security model: v2c
+        #
+        #   Notification host: 127.0.0.4       udp-port: 162   type: trap
+        #   user: priv@te                      security model: v1
+        #
+        #   Notification host: 127.0.0.4       udp-port: 162   type: trap
+        #   user: public                       security model: v1
+        #
+        #   Notification host: 127.0.0.4       udp-port: 20162 type: trap
+        #   user: private                      security model: v1
         #
         #   ```
         #
@@ -359,7 +374,7 @@ module PuppetX
             resource_hash = { name: host, ensure: :present, port: port.to_i }
             sec_match = /^v3 (\w+)/.match(auth)
             resource_hash[:security] = sec_match[1] if sec_match
-            ver_match = /^(v\w+)/.match(auth)
+            ver_match = /^(v\d)/.match(auth) # first 2 characters
             resource_hash[:version] = ver_match[1] if ver_match
             resource_hash[:type] = /trap/.match(type) ? :traps : :informs
             resource_hash[:username] = username if /^v3/.match(auth)

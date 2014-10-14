@@ -25,8 +25,6 @@ RSpec.shared_examples 'provider exists?' do
 end
 
 RSpec.shared_examples 'provider instances' do |opts = { size: 0 }|
-  subject { described_class.instances }
-
   it { is_expected.to be_an Array }
   it "returns #{opts[:size]} instances" do
     expect(subject.size).to eq(opts[:size])
