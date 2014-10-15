@@ -602,4 +602,14 @@ describe PuppetX::NetDev::EosApi do
       end
     end
   end
+
+  describe '#snmp_notification_receiver_cmd' do
+    subject { api.send(:snmp_notification_receiver_cmd, opts) }
+
+    context 'when :version is :v2' do
+      let(:opts) { fixture(:snmp_host_opts) }
+      it { is_expected.to match(/version 2c/) }
+      it { is_expected.not_to match(/version 2 /) }
+    end
+  end
 end

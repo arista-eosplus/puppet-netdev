@@ -182,6 +182,42 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
         end
 
         it { is_expected.to include(name: name) }
+        it { is_expected.to include(ensure: :present) }
+        it { is_expected.to include(username: 'snmpuser') }
+        it { is_expected.to include(port: 162) }
+        it { is_expected.to include(version: :v3) }
+        it { is_expected.to include(type: :traps) }
+        it { is_expected.to include(security: :noauth) }
+      end
+    end
+
+    context 'when destroying' do
+      let(:resource_override) { { ensure: :absent } }
+      before :each do
+        allow(provider.api).to receive(:snmp_notification_receiver_remove)
+          .and_return(true)
+      end
+      subject do
+        provider.destroy
+        provider.flush
+      end
+
+      let(:name) { '127.0.0.1:snmpuser:162:v3:traps:noauth' }
+
+      it 'calls snmp_notification_receiver_remove' do
+        expect(provider.api).to receive(:snmp_notification_receiver_remove)
+          .and_return(true)
+        subject
+      end
+      describe 'the resulting property_hash' do
+        subject do
+          provider.destroy
+          provider.flush
+          provider.instance_variable_get(:@property_hash)
+        end
+
+        it { is_expected.to include(name: name) }
+        it { is_expected.to include(ensure: :absent) }
         it { is_expected.to include(username: 'snmpuser') }
         it { is_expected.to include(port: 162) }
         it { is_expected.to include(version: :v3) }

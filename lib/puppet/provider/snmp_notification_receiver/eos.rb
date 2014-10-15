@@ -57,6 +57,14 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   end
 
   def create
+    create_or_destroy
+  end
+
+  def destroy
+    create_or_destroy
+  end
+
+  def create_or_destroy
     managed_properties = default_properties.merge(specified_properties)
     check_required_properties(managed_properties)
     @property_flush = managed_properties
@@ -65,7 +73,12 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   def flush
     new_property_hash = @property_hash.merge(@property_flush)
     new_property_hash[:name] = name
-    api.snmp_notification_receiver_set(new_property_hash)
+    case new_property_hash[:ensure]
+    when :present
+      api.snmp_notification_receiver_set(new_property_hash)
+    when :absent
+      api.snmp_notification_receiver_remove(new_property_hash)
+    end
     @property_hash = new_property_hash
     @property_hash[:name] = self.class.namevar(new_property_hash)
   end

@@ -410,15 +410,57 @@ module PuppetX
         # @return [Boolean]
         def snmp_notification_receiver_set(opts = {})
           prefix = %w(enable configure)
+          cmd = snmp_notification_receiver_cmd(opts)
+          result = eapi_action([*prefix, cmd], 'set snmp host')
+          result ? true : false
+        end
+
+        ##
+        # snmp_notification_receiver_cmd builds a command given a resource
+        # hash.
+        #
+        # @return [String]
+        def snmp_notification_receiver_cmd(opts = {})
           host = opts[:name].split(':').first
-          version = /\d+c?/.match(opts[:version]).to_s
+          version = /\d+/.match(opts[:version]).to_s
+          version.sub!('2', '2c')
           cmd = "snmp-server host #{host}"
           cmd << " #{opts[:type] || :traps}"
           cmd << " version #{version}"
           cmd << " #{opts[:security] || :noauth}" if version == '3'
           cmd << " #{opts[:username] || opts[:community]}"
           cmd << " udp-port #{opts[:port]}"
-          result = eapi_action([*prefix, cmd], 'set snmp host')
+          cmd
+        end
+        private :snmp_notification_receiver_cmd
+
+        ##
+        # snmp_notification_receiver_remove removes an snmp-server host from
+        # the target device.
+        #
+        # @option opts [String] :name ('127.0.0.1') The hostname or ip address
+        #   of the snmp notification receiver host.
+        #
+        # @option opts [String] :username ('public') The SNMP username, or
+        #   community, to use for authentication.
+        #
+        # @option opts [Fixnum] :port (162) The UDP port of the receiver.
+        #
+        # @option opts [Symbol] :version (:v3) The version, :v1, :v2, or :v3
+        #
+        # @option opts [Symbol] :type (:traps) The notification type, :traps or
+        #   :informs.
+        #
+        # @option opts [Symbol] :security (:auth) The security mode, :auth,
+        #   :noauth, or :priv
+        #
+        # @api public
+        #
+        # @return [Boolean]
+        def snmp_notification_receiver_remove(opts = {})
+          prefix = %w(enable configure)
+          cmd = 'no ' << snmp_notification_receiver_cmd(opts)
+          result = eapi_action([*prefix, cmd], 'remove snmp host')
           result ? true : false
         end
       end

@@ -1,0 +1,11 @@
+--- 
+  !ruby/sym name: "127.0.0.4:private:10162:v2:informs"
+  !ruby/sym ensure: !ruby/sym absent
+  !ruby/sym port: 10162
+  !ruby/sym version: !ruby/sym v2
+  !ruby/sym type: !ruby/sym informs
+  !ruby/sym community: private
+  !ruby/sym username: 
+  !ruby/sym security: 
+  !ruby/sym vrf: 
+  !ruby/sym source_interface: 
