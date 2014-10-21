@@ -60,10 +60,6 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
         end
 
         it_behaves_like 'provider instances', size: 8
-        it 'does not declare duplicate resources by name' do
-          uniq_size = subject.uniq(&:name).size
-          expect(subject.size).to eq(uniq_size)
-        end
       end
     end
 
@@ -124,31 +120,6 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
       it { is_expected.to include(security: :noauth) }
       it { is_expected.to_not include(:community) }
     end
-
-    [:v1, :v2].each do |version|
-      context "when version is #{version.inspect} and community is absent" do
-        subject { provider.create }
-        let :resource_override do
-          { version: version }
-        end
-
-        it "then fails with 'community is required'" do
-          expect { subject }
-            .to raise_error Puppet::Error, /community is required/
-        end
-      end
-    end
-
-    context 'when version is :v3 and username is absent' do
-      subject { provider.create }
-      let :resource_hash do
-        { name: '127.0.0.1', version: :v3 }
-      end
-      it "then fails with 'username is required'" do
-        expect { subject }
-          .to raise_error Puppet::Error, /username is required/
-      end
-    end
   end
 
   describe '#flush' do
@@ -162,7 +133,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
         provider.flush
       end
 
-      let(:name) { '127.0.0.1:snmpuser:162:v3:traps:noauth' }
+      let(:name) { '127.0.0.1:snmpuser:162' }
 
       it 'calls snmp_notification_receiver_set' do
         expect(provider.api).to receive(:snmp_notification_receiver_set)
@@ -202,7 +173,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
         provider.flush
       end
 
-      let(:name) { '127.0.0.1:snmpuser:162:v3:traps:noauth' }
+      let(:name) { '127.0.0.1:snmpuser:162' }
 
       it 'calls snmp_notification_receiver_remove' do
         expect(provider.api).to receive(:snmp_notification_receiver_remove)

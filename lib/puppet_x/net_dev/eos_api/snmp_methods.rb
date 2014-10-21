@@ -377,8 +377,7 @@ module PuppetX
             ver_match = /^(v\d)/.match(auth) # first 2 characters
             resource_hash[:version] = ver_match[1] if ver_match
             resource_hash[:type] = /trap/.match(type) ? :traps : :informs
-            resource_hash[:username] = username if /^v3/.match(auth)
-            resource_hash[:community] = username unless /^v3/.match(auth)
+            resource_hash[:username] = username
             resource_hash
           end
         end
@@ -428,7 +427,7 @@ module PuppetX
           cmd << " #{opts[:type] || :traps}"
           cmd << " version #{version}"
           cmd << " #{opts[:security] || :noauth}" if version == '3'
-          cmd << " #{opts[:username] || opts[:community]}"
+          cmd << " #{opts[:username]}"
           cmd << " udp-port #{opts[:port]}"
           cmd
         end

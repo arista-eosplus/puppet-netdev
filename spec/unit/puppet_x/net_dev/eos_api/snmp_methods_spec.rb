@@ -450,7 +450,7 @@ describe PuppetX::NetDev::EosApi do
                                    port: 162,
                                    type: :traps,
                                    version: 'v2',
-                                   community: 'private')
+                                   username: 'private')
       end
       it 'includes 127.0.0.3' do
         expect(subject).to include(name: '127.0.0.3',
@@ -458,7 +458,7 @@ describe PuppetX::NetDev::EosApi do
                                    port: 162,
                                    type: :traps,
                                    version: 'v1',
-                                   community: 'public')
+                                   username: 'public')
       end
       it 'includes 127.0.0.4' do
         expect(subject).to include(name: '127.0.0.4',
@@ -466,7 +466,7 @@ describe PuppetX::NetDev::EosApi do
                                    port: 10_162,
                                    type: :informs,
                                    version: 'v2',
-                                   community: 'private')
+                                   username: 'private')
       end
     end
 
@@ -487,7 +487,7 @@ describe PuppetX::NetDev::EosApi do
                                    port: 20_162,
                                    type: :traps,
                                    version: 'v1',
-                                   community: 'private')
+                                   username: 'private')
       end
     end
 
@@ -508,16 +508,16 @@ describe PuppetX::NetDev::EosApi do
                                    port: 20_162,
                                    type: :traps,
                                    version: 'v1',
-                                   community: 'private')
+                                   username: 'private')
       end
-      %w(priv@te public).each do |community|
-        it "includes 127.0.0.4 port 162 (varies by community #{community})" do
+      %w(priv@te public).each do |username|
+        it "includes 127.0.0.4 port 162 (varies by community #{username})" do
           expect(subject).to include(name: '127.0.0.4',
                                      ensure: :present,
                                      port: 162,
                                      type: :traps,
                                      version: 'v1',
-                                     community: community)
+                                     username: username)
         end
       end
     end
@@ -553,7 +553,7 @@ describe PuppetX::NetDev::EosApi do
 
       context 'when :name contains colons' do
         let :resource_override do
-          { name: '127.0.0.1:snmpuser:162:v3:informs:auth' }
+          { name: '127.0.0.1:snmpuser:162' }
         end
 
         it 'uses the first component for name' do
@@ -573,7 +573,7 @@ describe PuppetX::NetDev::EosApi do
 
       context 'when :version is :v2c' do
         let :resource_override do
-          { version: :v2c, username: nil, community: 'public' }
+          { version: :v2c, username: 'public' }
         end
 
         it 'sets the version to "2c"' do

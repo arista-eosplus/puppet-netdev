@@ -48,12 +48,7 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   #
   # @return [String] the composite namevar
   def self.namevar(opts)
-    values = [opts[:name]]
-    values << (opts[:username] || opts[:community])
-    values += [:port, :version, :type].map { |k| opts[k] }
-    # security is optional
-    values << opts[:security] if opts[:security]
-    values.join(':')
+    "#{opts[:name]}:#{opts[:username]}:#{opts[:port] || '162'}"
   end
 
   def create
@@ -66,13 +61,12 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
 
   def create_or_destroy
     managed_properties = default_properties.merge(specified_properties)
-    check_required_properties(managed_properties)
     @property_flush = managed_properties
   end
 
   def flush
     new_property_hash = @property_hash.merge(@property_flush)
-    new_property_hash[:name] = name
+    new_property_hash[:name] = name.split(':').first
     case new_property_hash[:ensure]
     when :present
       api.snmp_notification_receiver_set(new_property_hash)
@@ -105,32 +99,9 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   #
   # @return [Hash<Symbol,Object>]
   def specified_properties
-    resource.to_hash.reject do |key, _|
-      [:provider, :loglevel].include?(key)
+    resource.to_hash.reject do |key, val|
+      [:provider, :loglevel].include?(key) || val.nil?
     end
   end
   private :specified_properties
-
-  ##
-  # check_required_properties Checks the set of properties being managed
-  # against the set of required properties.
-  #
-  # @param [Hash<Symbol,Object>] rsrc_hash The resource has of properties to
-  # manage.
-  #
-  # @api private
-  #
-  # @return [Boolean]
-  def check_required_properties(rsrc_hash)
-    case rsrc_hash[:version]
-    when :v1, :v2, :v2c
-      required = [:community]
-    else
-      required = [:username, :security]
-    end
-    required.each do |prop|
-      fail Puppet::Error, "#{prop} is required" unless rsrc_hash[prop]
-    end
-  end
-  private :check_required_properties
 end
