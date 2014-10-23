@@ -1,0 +1,2 @@
+--- 
+  - output: "\nUser name      : jeff\nSecurity model : v3\nEngine ID      : f5717f00420008177800\nAuthentication : SHA\nPrivacy        : AES-128\nGroup          : developers\n\nUser name      : nigel\nSecurity model : v2c\nGroup          : sysops (not configured)\n\nUser name      : nigel\nSecurity model : v3\nEngine ID      : f5717f00420008177800\nAuthentication : SHA\nPrivacy        : AES-128\nGroup          : sysops\n"
