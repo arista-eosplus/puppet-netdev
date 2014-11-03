@@ -49,4 +49,11 @@ if netdev_stdlib_version
 else
   gem 'puppetmodule-netdev_stdlib', '~> 0.10.0'
 end
+
+puppet_x_eos_eapi_version = ENV['GEM_PUPPET_X_EOS_EAPI_VERSION']
+if puppet_x_eos_eapi_version
+  gem 'puppet_x_eos_eapi', *location_for(puppet_x_eos_eapi_version)
+else
+  gem 'puppet_x_eos_eapi'
+end
 # vim:ft=ruby

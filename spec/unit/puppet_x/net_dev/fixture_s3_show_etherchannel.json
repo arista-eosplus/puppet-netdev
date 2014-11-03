@@ -1,5 +1,0 @@
-[
-  {
-    "output": "Port Channel Port-Channel3:\n  Active Ports: Ethernet3 Ethernet4 \nPort Channel Port-Channel10:\n  No Active Ports\n  Configured, but inactive ports:\n       Port         Reason unconfigured       \n    --------------- ------------------------- \n       Ethernet1    Waiting for LACP response \n       Ethernet2    Waiting for LACP response \n\n"
-  }
-]
