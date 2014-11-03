@@ -1,0 +1,8 @@
+--- 
+  - !ruby/sym name: jeff
+    !ruby/sym group: rw
+    !ruby/sym acl: stest1
+  - !ruby/sym name: private
+    !ruby/sym group: rw
+  - !ruby/sym name: public
+    !ruby/sym group: ro

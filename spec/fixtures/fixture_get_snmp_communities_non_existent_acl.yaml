@@ -1,0 +1,2 @@
+--- 
+  - output: "\nCommunity name: jeff\nCommunity access: read-write\nAccess list: stest1\n\nCommunity name: jeff2\nCommunity access: read-only\nAccess list: stest1\n\nCommunity name: jeff3\nCommunity access: read-only\nAccess list: stest1\n\nCommunity name: jeff4\nCommunity access: read-only\nAccess list: stest2 (non-existent)\n\nCommunity name: private\nCommunity access: read-write\n\nCommunity name: public\nCommunity access: read-only\n"

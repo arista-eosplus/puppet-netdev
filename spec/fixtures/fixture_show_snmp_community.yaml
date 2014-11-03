@@ -1,0 +1,2 @@
+--- 
+  - output: "\nCommunity name: jeff\nCommunity access: read-write\nAccess list: stest1\n\nCommunity name: private\nCommunity access: read-write\n\nCommunity name: public\nCommunity access: read-only\n"

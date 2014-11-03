@@ -197,4 +197,134 @@ describe PuppetX::NetDev::EosApi do
       subject
     end
   end
+
+  describe '#snmp_communities' do
+    subject { api.snmp_communities }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show snmp community', 'get snmp communities', format: 'text')
+        .and_return(example_api_response)
+    end
+
+    describe 'structure of the return object' do
+      let(:example_api_response) { fixture(:show_snmp_community) }
+
+      it { is_expected.to be_an Array }
+      it 'is expected to have 3 results' do
+        expect(subject.size).to eq(3)
+      end
+    end
+
+    context 'when there is a community with an existing acl' do
+      let(:example_api_response) { fixture(:show_snmp_community) }
+
+      it { is_expected.to include(name: 'jeff', group: 'rw', acl: 'stest1') }
+      it { is_expected.to include(name: 'public', group: 'ro') }
+      it { is_expected.to include(name: 'private', group: 'rw') }
+    end
+
+    context 'when there is a community with a non-existent acl' do
+      let(:example_api_response) do
+        fixture(:get_snmp_communities_non_existent_acl)
+      end
+
+      it 'has 6 results' do
+        expect(subject.size).to eq(6)
+      end
+      it { is_expected.to include(name: 'jeff', group: 'rw', acl: 'stest1') }
+      it { is_expected.to include(name: 'jeff2', group: 'ro', acl: 'stest1') }
+      it { is_expected.to include(name: 'jeff3', group: 'ro', acl: 'stest1') }
+      it 'parses "Access list: stest2 (non-existent)" as stest2' do
+        expect(subject).to include(name: 'jeff4', group: 'ro', acl: 'stest2')
+      end
+      it { is_expected.to include(name: 'public', group: 'ro') }
+      it { is_expected.to include(name: 'private', group: 'rw') }
+    end
+  end
+
+  describe '#snmp_community_set' do
+    subject { api.snmp_community_set(resource_hash) }
+    let(:prefix) { %w(enable configure) }
+
+    context 'when the api call succeeds' do
+      before :each do
+        allow(api).to receive(:eapi_action).and_return(true)
+      end
+
+      let :resource_hash do
+        { name: 'public', group: :ro, acl: 'stest1' }
+      end
+
+      it { is_expected.to eq(true) }
+    end
+
+    context 'group and acl are both set' do
+      let :resource_hash do
+        { name: 'public', group: :ro, acl: 'stest1' }
+      end
+
+      it 'sets the group and the acl in that positional order' do
+        expected = 'snmp-server community public ro stest1'
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, expected], 'define snmp community')
+        subject
+      end
+    end
+
+    context 'group is set, acl is not set' do
+      let :resource_hash do
+        { name: 'public', group: :ro }
+      end
+
+      it 'sets the group and not the acl' do
+        expected = 'snmp-server community public ro'
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, expected], 'define snmp community')
+        subject
+      end
+    end
+
+    context 'group is not set, acl is set' do
+      let :resource_hash do
+        { name: 'public', acl: 'stest1' }
+      end
+
+      it 'sets the acl and not the group' do
+        expected = 'snmp-server community public stest1'
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, expected], 'define snmp community')
+        subject
+      end
+    end
+  end
+
+  describe '#snmp_community_destroy' do
+    subject { api.snmp_community_destroy(resource_hash) }
+    let(:prefix) { %w(enable configure) }
+
+    let :resource_hash do
+      { name: 'public' }
+    end
+
+    context 'when the api call succeeds' do
+      before :each do
+        allow(api).to receive(:eapi_action).and_return(true)
+      end
+
+      it { is_expected.to eq(true) }
+    end
+
+    describe 'expected REST API call' do
+      it 'calls eapi_action with []' do
+        expected = [[*prefix, 'no snmp-server community public'],
+                    'destroy snmp community']
+        expect(api).to receive(:eapi_action)
+          .with(*expected)
+          .and_return(true)
+
+        subject
+      end
+    end
+  end
 end

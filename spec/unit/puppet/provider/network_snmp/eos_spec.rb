@@ -41,11 +41,11 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
         subject { described_class.instances.find { |p| p.name == 'settings' } }
 
         include_examples 'provider resource methods',
-          name: 'settings',
-          enable: :true,
-          contact: 'Jane Doe',
-          location: 'Planet Earth',
-          exists?: true
+                         name: 'settings',
+                         enable: :true,
+                         contact: 'Jane Doe',
+                         location: 'Planet Earth',
+                         exists?: true
       end
     end
 

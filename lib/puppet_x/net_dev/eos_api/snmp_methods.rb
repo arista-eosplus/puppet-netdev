@@ -2,6 +2,7 @@
 
 module PuppetX
   module NetDev
+    ##
     class EosApi
       ##
       # SnmpMethods encapsulate the SNMP specific EOS API methods.  This
@@ -134,6 +135,122 @@ module PuppetX
           cmd = %w(enable configure)
           cmd << "snmp-server location #{location}"
           eapi_action(cmd, 'set snmp location') && true || false
+        end
+
+        ##
+        # snmp_communities retrieves all of the SNMP community strings defined
+        # on the target device and returns an Array of Hash objects suitable
+        # for use as a resource hash to the provider's initializer method.
+        #
+        # @param [String] buf Describe the string parameter here
+        #
+        # @api public
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def snmp_communities
+          cmd = 'show snmp community'
+          result = eapi_action(cmd, 'get snmp communities', format: 'text')
+          text = result.first['output']
+          parse_snmp_communities(text)
+        end
+
+        ##
+        # parse_snmp_communities takes the text output from the `show snmp
+        # community` EAPI command and parses the text into structured data
+        # suitable for use as a resource hash to the provider initializer
+        # method.  An example of the output looks like:
+        #
+        # ```
+        # Community name: jeff
+        # Community access: read-write
+        # Access list: stest1
+        #
+        # Community name: jeff2
+        # Community access: read-write
+        # Access list: stest2 (non-existent)
+        #
+        # Community name: private
+        # Community access: read-write
+        #
+        # Community name: public
+        # Community access: read-only
+        # ```
+        #
+        # @param [String] text The text to parse
+        #
+        # @api private
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def parse_snmp_communities(text)
+          blocks = text.split("\n\n")
+          # (?:\s*\(.*?\)|\n|$) deals with trailing data after the value.  e.g.
+          # an ACL might come back as `Access list: stest2 (non-existent)`
+          regexp = / (\w+): (\w.*?)(?:\s*\(.*?\)|\n|$)/
+          communities = blocks.map { |l| l.scan(regexp) }
+          communities.map do |pairs|
+            pairs.each_with_object({}) do |(key, val), resource_hash|
+              resource_hash.merge!(map_snmp_keys(key, val))
+            end
+          end
+        end
+
+        ##
+        # map_snmp_keys maps the keys and values parsed from the show snmp
+        # community raw text output into resource attributes and values.
+        #
+        # @api private
+        def map_snmp_keys(key, val)
+          case key
+          when 'name' then { name: val }
+          when 'list' then { acl: val }
+          when 'access'
+            group = case val
+                    when 'read-write'; then 'rw'
+                    when 'read-only'; then 'ro'
+                    end
+            { group: group }
+          end
+        end
+        private :map_snmp_keys
+
+        ##
+        # snmp_community_set creates or updates an snmp community on the target
+        # device given a hash of attributes from the resource model.
+        #
+        # @option opts [String] :name ('public') The community name
+        #
+        # @option opts [Symbol] :group (:ro) :ro or :rw for read-only or
+        #   read-write access control for the community name.
+        #
+        # @option opts [String] :acl ('stest1') The standard ACL name defined on
+        #   the switch.  This ACL is defined using the `ip access-list standard
+        #   stest1` command.
+        #
+        # @api public
+        #
+        # @return [Boolean] true if the resource was successfully created
+        def snmp_community_set(opts)
+          prefix = %w(enable configure)
+          cmd = "snmp-server community #{opts[:name]}"
+          cmd << " #{opts[:group]}" if opts[:group]
+          cmd << " #{opts[:acl]}" if opts[:acl]
+          eapi_action([*prefix, cmd], 'define snmp community') && true || false
+        end
+
+        ##
+        # snmp_community_destroy deletes an SNMP community from the target
+        # device.  given a hash of attributes from the resource model.
+        #
+        # @option opts [String] :name ('public') The community name
+        #
+        # @api public
+        #
+        # @return [Boolean] true if the resource was successfully created
+        def snmp_community_destroy(opts)
+          prefix = %w(enable configure)
+          cmd = "no snmp-server community #{opts[:name]}"
+          result = eapi_action([*prefix, cmd], 'destroy snmp community')
+          result && true || false
         end
       end
     end
