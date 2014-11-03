@@ -5,6 +5,7 @@ require 'spec_helper'
 # SnmpMethods should be mixed into the EosApi class
 describe PuppetX::NetDev::EosApi do
   let(:api) { PuppetX::NetDev::EosApi.new }
+  let(:prefix) { %w(enable configure) }
 
   describe '#snmp_attributes' do
     subject { api.snmp_attributes }
@@ -324,6 +325,98 @@ describe PuppetX::NetDev::EosApi do
           .and_return(true)
 
         subject
+      end
+    end
+  end
+
+  describe '#snmp_notifications' do
+    subject { api.snmp_notifications }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show snmp trap', 'get snmp traps', format: 'text')
+        .and_return(fixture(:show_snmp_trap))
+    end
+
+    it { is_expected.to be_an Array }
+    it 'parses 23 resources' do
+      expect(subject.size).to eq(23)
+    end
+    describe 'disabled notifications' do
+      it 'includes msdp backward-transition' do
+        expect(subject).to include(name: 'msdp backward-transition',
+                                   enable: :false)
+      end
+      it { is_expected.to include(name: 'pim neighbor-loss', enable: :false) }
+    end
+  end
+
+  describe '#snmp_notification_set' do
+    subject { api.snmp_notification_set(resource_hash) }
+
+    before :each do
+      allow(api).to receive(:eapi_action).and_return([{}, {}, {}])
+    end
+
+    context 'when :enable => :true' do
+      let :resource_hash do
+        { name: 'snmp link-down', enable: :true }
+      end
+
+      it { is_expected.to eq(true) }
+
+      it 'executes "snmp-server enable traps snmp link-down"' do
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, 'snmp-server enable traps snmp link-down'],
+                'set snmp trap')
+        subject
+      end
+    end
+
+    context 'when :enable => :false' do
+      let :resource_hash do
+        { name: 'snmp link-down', enable: :false }
+      end
+
+      it { is_expected.to eq(true) }
+
+      it 'executes "no snmp-server enable traps snmp link-down"' do
+        expect(api).to receive(:eapi_action)
+          .with([*prefix, 'no snmp-server enable traps snmp link-down'],
+                'set snmp trap')
+        subject
+      end
+    end
+
+    context 'when :name => "all" (manage all traps)' do
+      context 'when :enable => :true' do
+        let :resource_hash do
+          { name: 'all', enable: :true }
+        end
+
+        it { is_expected.to eq(true) }
+
+        it 'executes "snmp-server enable traps"' do
+          expect(api).to receive(:eapi_action)
+            .with([*prefix, 'snmp-server enable traps'],
+                  'set snmp trap')
+          subject
+        end
+      end
+
+      context 'when :enable => :false' do
+        let :resource_hash do
+          { name: 'all', enable: :false }
+        end
+
+        it { is_expected.to eq(true) }
+
+        it 'executes "no snmp-server enable traps"' do
+          expect(api).to receive(:eapi_action)
+            .with([*prefix, 'no snmp-server enable traps'],
+                  'set snmp trap')
+          subject
+        end
       end
     end
   end
