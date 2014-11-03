@@ -1,0 +1,8 @@
+[
+  {
+    "output": ""
+  },
+  {
+    "output": "interface Port-Channel4\n   description Office Backbone\n   port-channel min-links 2\n"
+  }
+]

@@ -134,6 +134,8 @@ describe Puppet::Type.type(:network_vlan).provider(:eos) do
       before :each do
         allow(provider.api).to receive(:vlan_create)
           .with(provider.resource[:id])
+        allow(provider.api).to receive(:set_vlan_state).with(any_args)
+        allow(provider.api).to receive(:set_vlan_name).with(any_args)
       end
 
       it 'calls EosApi#vlan_create(id) with the resource id' do
@@ -164,6 +166,10 @@ describe Puppet::Type.type(:network_vlan).provider(:eos) do
           .with(provider.resource[:id])
         allow(provider.api).to receive(:vlan_destroy)
           .with(provider.resource[:id])
+        allow(provider.api).to receive(:set_vlan_state)
+          .with(any_args)
+        allow(provider.api).to receive(:set_vlan_name)
+          .with(any_args)
       end
 
       it 'calls EosApi#vlan_destroy(id)' do

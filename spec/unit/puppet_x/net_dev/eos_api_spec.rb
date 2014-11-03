@@ -12,25 +12,26 @@ describe PuppetX::NetDev::EosProviderMethods do
 end
 
 describe PuppetX::NetDev::EosApi do
-  let(:address) { 'localhost' }
-  let(:port) { 80 }
-  let(:username) { 'admin' }
-  let(:password) { 'puppet' }
-  let(:config) do
-    {
-      address: address,
-      port: 80,
-      username: 'admin',
-      password: 'puppet'
-    }
+  let(:api) { PuppetX::NetDev::EosApi.new }
+
+  ##
+  # api_response returns a JSON fixture that presents a representative REST API
+  # response.  The method is memoized to reduce filesystem operations.
+  #
+  # @param [Symbol] key The fixture to load, e.g. :foo will load
+  #   'fixture_foo.json'
+  def api_response(key)
+    memo = Fixtures[key]
+    return memo if memo
+    file = File.join(File.dirname(__FILE__), "fixture_#{key}.json")
+    Fixtures[key] = JSON.load(File.read(file))
   end
-  let(:api) { PuppetX::NetDev::EosApi.new(config) }
 
   context 'initializing the API instance' do
     [:address, :port, :username, :password].each do |option|
       it "initializes with #{option}" do
-        api = described_class.new(option => send(option))
-        expect(api.send(option)).to eq(send(option))
+        api = described_class.new(option => 'foo')
+        expect(api.send(option)).to eq('foo')
       end
     end
 
@@ -41,25 +42,13 @@ describe PuppetX::NetDev::EosApi do
   end
 
   describe '#vlan(id)' do
-    # Data #vlan is expected to return
-    let :expected_result do
-      api_response['result'].first['vlans']
-    end
-
     context 'when the vlan exists' do
       subject { api.vlan(3110) }
-
-      # Data the mock API call returns
-      let :api_response do
-        dir = File.dirname(__FILE__)
-        file = File.join(dir, 'fixture_show_vlan_3110.json')
-        JSON.load(File.read(file))
-      end
 
       before do
         allow(api).to receive(:eapi_call)
           .with('show vlan 3110', {})
-          .and_return(api_response)
+          .and_return(api_response(:show_vlan_3110))
       end
 
       it 'has only one key' do
@@ -73,17 +62,10 @@ describe PuppetX::NetDev::EosApi do
     context 'when the vlan does not exist' do
       subject { api.vlan(4000) }
 
-      # Data the mock API call returns
-      let :api_response do
-        dir = File.dirname(__FILE__)
-        file = File.join(dir, 'fixture_show_vlan_4000.json')
-        JSON.load(File.read(file))
-      end
-
       before do
         allow(api).to receive(:eapi_call)
           .with('show vlan 4000', {})
-          .and_return(api_response)
+          .and_return(api_response(:show_vlan_4000))
       end
 
       it 'raises Puppet:Error with message "could not list vlans"' do
@@ -95,19 +77,11 @@ describe PuppetX::NetDev::EosApi do
   describe '#vlan_create(id)' do
     subject { api.vlan_create(3100) }
 
-    before :all do
-      dir = File.dirname(__FILE__)
-      good = File.join(dir, 'fixture_create_vlan_success.json')
-      @api_response_ok = JSON.load(File.read(good))
-      bad = File.join(dir, 'fixture_create_vlan_error.json')
-      @api_response_error = JSON.load(File.read(bad))
-    end
-
     context 'when eAPI reports no errors' do
       it 'accepts 3100 without error' do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'vlan 3100'], {})
-          .and_return(@api_response_ok)
+          .and_return(api_response(:create_vlan_success))
 
         subject
       end
@@ -117,7 +91,7 @@ describe PuppetX::NetDev::EosApi do
       before do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'vlan 3100'], {})
-          .and_return(@api_response_error)
+          .and_return(api_response(:create_vlan_error))
       end
 
       it 'raises Puppet::Error on eAPI errors' do
@@ -241,7 +215,7 @@ describe PuppetX::NetDev::EosApi do
         File.read(file)
       end
 
-      it 'accepts a keyword argument of :format => "text"', focus: true do
+      it 'accepts a keyword argument of :format => "text"' do
         args = ['show interfaces switchport', 'desc', { format: 'text' }]
         expect(api.send(:eapi_action, *args))
           .to eq(JSON.parse(api_response_body)['result'])
@@ -252,22 +226,10 @@ describe PuppetX::NetDev::EosApi do
   describe '#all_vlans' do
     subject { api.all_vlans }
 
-    # Data the mock API call returns
-    let :api_response do
-      dir = File.dirname(__FILE__)
-      file = File.join(dir, 'fixture_show_vlan.json')
-      JSON.load(File.read(file))
-    end
-
-    # Data all_vlans is expected to return
-    let :vlans do
-      api_response['result'].first['vlans']
-    end
-
     before do
       allow(api).to receive(:eapi_call)
         .with('show vlan', {})
-        .and_return(api_response)
+        .and_return(api_response(:show_vlan))
     end
 
     it { is_expected.to be_a_kind_of Hash }
@@ -287,17 +249,10 @@ describe PuppetX::NetDev::EosApi do
   describe '#all_interfaces' do
     subject { api.all_interfaces }
 
-    # Data the mock API call returns
-    let :api_response do
-      dir = File.dirname(__FILE__)
-      file = File.join(dir, 'fixture_show_interfaces.json')
-      JSON.load(File.read(file))
-    end
-
     before do
       allow(api).to receive(:eapi_call)
         .with('show interfaces', {})
-        .and_return(api_response)
+        .and_return(api_response(:show_interfaces))
     end
 
     it { is_expected.not_to have_key 'results' }
@@ -328,44 +283,228 @@ describe PuppetX::NetDev::EosApi do
     end
   end
 
-  describe '#uri' do
-    subject { api.uri.to_s }
+  describe '#all_portchannels_detailed' do
+    subject { api.all_portchannels_detailed }
 
-    context 'with username and password' do
-      let :url do
-        "http://#{username}:#{password}@#{address}"
+    before :each do
+      allow(api).to receive(:eapi_call)
+        .with('show etherchannel detailed', format: 'text')
+        .and_return(api_response(:s4_show_etherchannel_detailed))
+    end
+
+    it { is_expected.not_to have_key 'results' }
+    it { is_expected.to have_key 'Port-Channel3' }
+    it { is_expected.to have_key 'Port-Channel4' }
+
+    describe 'nested attribute hash' do
+      subject { api.all_portchannels_detailed['Port-Channel3'] }
+      it { is_expected.to have_key 'name' }
+      it { is_expected.to have_key 'ports' }
+
+      describe 'ports array' do
+        subject { api.all_portchannels_detailed['Port-Channel3']['ports'] }
+        it { is_expected.to include('Ethernet1') }
+        it { is_expected.to include('Ethernet2') }
+        it 'sorts the list of member ports' do
+          expect(subject).to eq(subject.sort)
+        end
       end
-      it { is_expected.to eq url }
+    end
+  end
+
+  describe '#all_portchannel_modes' do
+    subject { api.all_portchannel_modes }
+
+    context 'with two LAGS, one LACP passive, one active' do
+      before :each do
+        allow(api).to receive(:eapi_call)
+          .with('show port-channel summary', format: 'text')
+          .and_return(api_response(:show_port_channel_summary_2_lags))
+      end
+
+      let :expected_results do
+        {
+          'Port-Channel3' => { 'mode' => :passive },
+          'Port-Channel4' => { 'mode' => :active }
+        }
+      end
+
+      it { is_expected.to have_key 'Port-Channel3' }
+      it { is_expected.to have_key 'Port-Channel4' }
+      it { is_expected.to eq expected_results }
+    end
+
+    context 'with one LAG in LACP static mode' do
+      before :each do
+        allow(api).to receive(:eapi_call)
+          .with('show port-channel summary', format: 'text')
+          .and_return(api_response(:show_port_channel_summary_static))
+      end
+
+      let :expected_results do
+        {
+          'Port-Channel4' => { 'mode' => :active },
+          'Port-Channel9' => { 'mode' => :disabled }
+        }
+      end
+
+      it { is_expected.to have_key 'Port-Channel4' }
+      it { is_expected.to have_key 'Port-Channel9' }
+      it { is_expected.to eq expected_results }
+    end
+  end
+
+  describe '#all_portchannels' do
+    subject { api.all_portchannels }
+
+    before :each do
+      allow(api).to receive(:all_portchannels_detailed)
+        .and_return(fixture(:all_portchannels_detailed))
+      allow(api).to receive(:all_portchannel_modes)
+        .and_return(fixture(:all_portchannel_modes))
+      allow(api).to receive(:portchannel_min_links).and_return(2)
+    end
+
+    it { is_expected.to be_a Hash }
+    it { is_expected.to have_key 'Port-Channel4' }
+    it { is_expected.to have_key 'Port-Channel9' }
+    it 'has a mode attribute for each port channel' do
+      modes = subject.values.map { |v| v['mode'] }
+      expect(modes).to eq %w(active active)
+    end
+  end
+
+  describe '#channel_group_destroy' do
+    let :port_channels_detailed do
+      data = {
+        'name'  => 'Port-Channel9',
+        'ports' => %w(Ethernet1 Ethernet2)
+      }
+      { 'Port-Channel9' => data }
+    end
+
+    before :each do
+      allow(api).to receive(:all_portchannels_detailed)
+        .and_return(port_channels_detailed)
+    end
+
+    it 'removes interfaces from the channel group' do
+      expect(api).to receive(:interface_unset_channel_group).with('Ethernet1')
+      expect(api).to receive(:interface_unset_channel_group).with('Ethernet2')
+      api.channel_group_destroy('Port-Channel9')
+    end
+
+    it 'raises ArgumentError when the channel group is unknown' do
+      expect { api.channel_group_destroy('Port-Channel1') }
+        .to raise_error ArgumentError, /Port-Channel1 is not in \[.*?\]/
+    end
+  end
+
+  describe '#interface_unset_channel_group' do
+    it 'sets no channel-group using the API' do
+      cmd = %w(enable configure) << 'interface Ethernet1'
+      cmd << 'no channel-group'
+
+      expect(api).to receive(:eapi_action)
+        .with(cmd, 'remove Ethernet1 from channel group')
+
+      api.interface_unset_channel_group('Ethernet1')
+    end
+  end
+
+  describe '#port_channel_destroy' do
+    it 'removes the channel interface' do
+      cmd = %w(enable configure) << 'no interface Port-Channel1'
+
+      expect(api).to receive(:eapi_action)
+        .with(cmd, 'remove Port-Channel1')
+
+      api.port_channel_destroy('Port-Channel1')
+    end
+  end
+
+  describe '#channel_group_create' do
+    context 'with Port-Channel9 and Ethernet1 LACP mode active' do
+      it 'sets the interface channel group to active' do
+        expect(api).to receive(:interface_set_channel_group)
+          .with('Ethernet1', mode: :active, group: 9)
+
+        api.channel_group_create('Port-Channel9',
+                                 interfaces: ['Ethernet1'],
+                                 mode: :active)
+      end
+    end
+  end
+
+  describe '#interface_set_channel_group' do
+    subject do
+      api.interface_set_channel_group('Ethernet1', group: 9, mode: mode)
+    end
+    let(:cmd_prefix) { ['enable', 'configure', 'interface Ethernet1'] }
+    let(:msg) { 'join Ethernet1 to channel group 9' }
+
+    context 'when mode is active' do
+      let(:mode) { :active }
+      let(:config_cmd) { 'channel-group 9 mode active' }
+
+      it 'configures Ethernet1 in group 9 as active' do
+        expect(api).to receive(:eapi_action)
+          .with([*cmd_prefix, config_cmd], msg)
+
+        subject
+      end
+    end
+
+    context 'when mode is passive' do
+      let(:mode) { :passive }
+      let(:config_cmd) { 'channel-group 9 mode passive' }
+
+      it 'configures Ethernet1 in group 9 as passive' do
+        expect(api).to receive(:eapi_action)
+          .with([*cmd_prefix, config_cmd], msg)
+
+        subject
+      end
+    end
+
+    context 'when mode is disabled' do
+      let(:mode) { :disabled }
+      let(:config_cmd) { 'channel-group 9 mode on' }
+
+      it 'configures Ethernet1 in group 9 as static' do
+        expect(api).to receive(:eapi_action)
+          .with([*cmd_prefix, config_cmd], msg)
+
+        subject
+      end
+    end
+
+    context 'when mode is invalid' do
+      it 'raises ArgumentError' do
+        expect { api.interface_set_channel_group('Ethernet1', mode: 'bad') }
+          .to raise_error ArgumentError, 'Unknown LACP mode bad'
+      end
+    end
+  end
+
+  describe '#uri' do
+    context 'with username and password' do
+      subject { described_class.new(username: 'foo', password: 'bar').uri.to_s }
+      it { is_expected.to eq 'http://foo:bar@localhost' }
     end
 
     context 'without username and password' do
-      let(:config) do
-        {
-          address: 'dhcp150.jeff.backline.puppetlabs.net',
-          port: 80
-        }
-      end
-      let :url do
-        'http://dhcp150.jeff.backline.puppetlabs.net'
-      end
-
-      it { is_expected.to eq url }
+      subject { described_class.new(address: 'foo.lan', port: 90).uri.to_s }
+      it { is_expected.to eq 'http://admin:puppet@foo.lan:90' }
     end
   end
 
   describe '#set_vlan_name' do
     context 'with valid arguments of 3111, "foo"' do
-      let :api_response do
-        dir = File.dirname(__FILE__)
-        file = 'fixture_enable_configure_vlan_3111_name_foo.json'
-        file_path = File.join(dir, file)
-        JSON.load(File.read(file_path))
-      end
-
       before do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'vlan 3111', 'name foo'], {})
-          .and_return(api_response)
+          .and_return(api_response(:enable_configure_vlan_3111_name_foo))
       end
 
       it 'names the vlan "foo"' do
@@ -374,17 +513,10 @@ describe PuppetX::NetDev::EosApi do
     end
 
     context 'with invalid arguments of "foo", "bar"' do
-      let :api_response do
-        dir = File.dirname(__FILE__)
-        file = 'fixture_enable_configure_vlan_foo_name_bar.json'
-        file_path = File.join(dir, file)
-        JSON.load(File.read(file_path))
-      end
-
       before do
         allow(api).to receive(:eapi_call)
           .with(['enable', 'configure', 'vlan foo', 'name bar'], {})
-          .and_return(api_response)
+          .and_return(api_response(:enable_configure_vlan_foo_name_bar))
       end
 
       it 'raises Puppet::Error' do
@@ -676,6 +808,141 @@ describe PuppetX::NetDev::EosApi do
           .and_return(api_response)
         api.set_interface_mtu('Ethernet1', 9000)
       end
+    end
+  end
+
+  describe '#portchannel_min_links' do
+    subject { api.portchannel_min_links(name) }
+
+    before :each do
+      api_commands = ['enable', "show running-config interfaces #{name}"]
+      msg = 'obtain port channel min links value'
+
+      allow(api).to receive(:eapi_action)
+        .with(api_commands, msg, format: 'text')
+        .and_return(fixture(fixture_name))
+    end
+
+    context 'min-links 2 in runnning-config' do
+      let(:name) { 'Port-Channel4' }
+      let(:fixture_name) { :portchannel_min_links_1 }
+
+      it 'returns 2 for the number of minimum links' do
+        is_expected.to eq(2)
+      end
+    end
+
+    context 'min-links not in runnning-config' do
+      let(:name) { 'Port-Channel9' }
+      let(:fixture_name) { :portchannel_min_links_2 }
+
+      it 'assumes and returns 0 for the number of minimum links' do
+        is_expected.to eq(0)
+      end
+    end
+  end
+
+  describe '#set_portchannel_min_links' do
+    subject { api.set_portchannel_min_links(name, min_links) }
+    let(:name) { 'Port-Channel4' }
+    let(:expected) do
+      cmd = %w(enable configure) << "interface #{name}"
+      cmd << "port-channel min-links #{min_links}"
+    end
+
+    [0, 1, 2, 3].each do |val|
+      context "when min-links is #{val}" do
+        let(:min_links) { val }
+
+        it "calls eapi_action to set min links to #{val}" do
+          expect(api).to receive(:eapi_action)
+            .with(expected, 'set port-channel min links')
+          subject
+        end
+      end
+    end
+  end
+
+  describe '#parse_min_links' do
+    subject { api.parse_min_links(text) }
+    context 'when text does not contain a min-links line' do
+      let(:text) { "interface Port-Channel4\n  description Office Backbone\n" }
+      it { is_expected.to eq(0) }
+    end
+
+    context 'when text contain min-links 2' do
+      let(:text) { "interface Port-Channel4\n  port-channel min-links 2\n" }
+      it { is_expected.to eq(2) }
+    end
+  end
+
+  describe '#get_flowcontrol' do
+    subject { api.get_flowcontrol(name) }
+    let(:name) { 'Ethernet1' }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show flowcontrol interface Ethernet1',
+              'get flowcontrol config',
+              format: 'text')
+        .and_return(fixture(:show_flowcontrol_et1))
+    end
+    it { is_expected.to eq(send: 'off', receive: 'off') }
+  end
+
+  describe '#parse_flowcontrol_single' do
+    subject { api.parse_flowcontrol_single(text) }
+
+    context 'when the input text is valid' do
+      let(:text) do
+        <<-TEXT
+Port        Send FlowControl  Receive FlowControl  RxPause       TxPause
+            admin    oper     admin    oper
+----------  -------- -------- -------- --------    ------------- -------------
+Et1         off      unknown  off      unknown     0             0
+        TEXT
+      end
+
+      it { is_expected.to eq(send: 'off', receive: 'off') }
+    end
+
+    context 'when the input text is invalid' do
+      let(:text) { 'garbage' }
+      it 'raises ArgumentError' do
+        expect { subject }.to raise_error ArgumentError, /could not parse/
+      end
+    end
+  end
+
+  describe '#set_flowcontrol_send' do
+    subject { api.set_flowcontrol_send(name, value) }
+    let(:name) { 'Ethernet1' }
+    let(:value) { :on }
+    let(:expected) do
+      cmd = %w(enable configure) << "interface #{name}"
+      cmd << "flowcontrol send #{value}"
+    end
+
+    it 'calls eapi_action to configure the device' do
+      expect(api).to receive(:eapi_action)
+        .with(expected, 'configure flowcontrol send')
+      subject
+    end
+  end
+
+  describe '#set_flowcontrol_recv' do
+    subject { api.set_flowcontrol_recv(name, value) }
+    let(:name) { 'Ethernet1' }
+    let(:value) { :on }
+    let(:expected) do
+      cmd = %w(enable configure) << "interface #{name}"
+      cmd << "flowcontrol receive #{value}"
+    end
+
+    it 'calls eapi_action to configure the device' do
+      expect(api).to receive(:eapi_action)
+        .with(expected, 'configure flowcontrol receive')
+      subject
     end
   end
 end
