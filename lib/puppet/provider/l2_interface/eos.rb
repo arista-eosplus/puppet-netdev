@@ -17,7 +17,6 @@ Puppet::Type.type(:l2_interface).provide(:eos) do
 
     interfaces.map do |name, attr_hash|
       provider_hash = { name: name }
-      require 'pry'; binding.pry;
       provider_hash.merge! trunk_attributes(attr_hash)
 
       new(provider_hash)
