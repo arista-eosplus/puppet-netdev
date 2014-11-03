@@ -1,9 +1,0 @@
-{
-  "jsonrpc": "2.0",
-  "result": [
-    {
-      "output": "\n                 Flags                                                          \n------------------------ ---------------------------- ------------------------- \n  a - LACP Active          p - LACP Passive           * - static fallback       \n  F - Fallback enabled     f - Fallback configured    ^ - individual fallback   \n  U - In Use               D - Down                                             \n  + - In-Sync              - - Out-of-Sync            i - incompatible with agg \n  P - bundled in Po        s - suspended              G - Aggregable            \n  I - Individual           S - ShortTimeout           w - wait for agg          \n\nNumber of channels in use: 0\nNumber of aggregators:0 \n\n   Port-Channel       Protocol    Ports            \n------------------ -------------- ---------------- \n   Po3(D)             LACP(p)      Et1(D) Et2(G-)  \n   Po4(D)             LACP(a)      Et3(G-) Et4(G-) \n\n"
-    }
-  ],
-  "id": "bfba9077-8cd2-4ce6-81d3-922e948ed591"
-}
