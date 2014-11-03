@@ -420,4 +420,196 @@ describe PuppetX::NetDev::EosApi do
       end
     end
   end
+
+  describe '#snmp_notification_receivers' do
+    subject { api.snmp_notification_receivers }
+
+    context 'when there are no duplicate hosts' do
+      before :each do
+        allow(api).to receive(:eapi_action)
+          .with('show snmp host', 'get snmp notification hosts', format: 'text')
+          .and_return(fixture(:show_snmp_host))
+      end
+
+      it { is_expected.to be_an Array }
+      it 'has 4 elements' do
+        expect(subject.size).to eq(4)
+      end
+      it 'includes 127.0.0.1' do
+        expect(subject).to include(name: '127.0.0.1',
+                                   ensure: :present,
+                                   port: 162,
+                                   type: :traps,
+                                   username: 'public',
+                                   version: 'v3',
+                                   security: 'noauth')
+      end
+      it 'includes 127.0.0.2' do
+        expect(subject).to include(name: '127.0.0.2',
+                                   ensure: :present,
+                                   port: 162,
+                                   type: :traps,
+                                   version: 'v2',
+                                   username: 'private')
+      end
+      it 'includes 127.0.0.3' do
+        expect(subject).to include(name: '127.0.0.3',
+                                   ensure: :present,
+                                   port: 162,
+                                   type: :traps,
+                                   version: 'v1',
+                                   username: 'public')
+      end
+      it 'includes 127.0.0.4' do
+        expect(subject).to include(name: '127.0.0.4',
+                                   ensure: :present,
+                                   port: 10_162,
+                                   type: :informs,
+                                   version: 'v2',
+                                   username: 'private')
+      end
+    end
+
+    context 'when there are duplicate hosts' do
+      before :each do
+        allow(api).to receive(:eapi_action)
+          .with('show snmp host', 'get snmp notification hosts', format: 'text')
+          .and_return(fixture(:show_snmp_host_duplicates))
+      end
+
+      it { is_expected.to be_an Array }
+      it 'has 5 elements' do
+        expect(subject.size).to eq(5)
+      end
+      it 'includes 127.0.0.4 port 20162' do
+        expect(subject).to include(name: '127.0.0.4',
+                                   ensure: :present,
+                                   port: 20_162,
+                                   type: :traps,
+                                   version: 'v1',
+                                   username: 'private')
+      end
+    end
+
+    context 'when there are many duplicate hosts' do
+      before :each do
+        allow(api).to receive(:eapi_action)
+          .with('show snmp host', 'get snmp notification hosts', format: 'text')
+          .and_return(fixture(:show_snmp_host_more_duplicates))
+      end
+
+      it { is_expected.to be_an Array }
+      it 'has 8 elements' do
+        expect(subject.size).to eq(8)
+      end
+      it 'includes 127.0.0.4 port 20162' do
+        expect(subject).to include(name: '127.0.0.4',
+                                   ensure: :present,
+                                   port: 20_162,
+                                   type: :traps,
+                                   version: 'v1',
+                                   username: 'private')
+      end
+      %w(priv@te public).each do |username|
+        it "includes 127.0.0.4 port 162 (varies by community #{username})" do
+          expect(subject).to include(name: '127.0.0.4',
+                                     ensure: :present,
+                                     port: 162,
+                                     type: :traps,
+                                     version: 'v1',
+                                     username: username)
+        end
+      end
+    end
+  end
+
+  describe '#snmp_notification_receiver_set' do
+    subject { api.snmp_notification_receiver_set(resource_hash) }
+
+    context 'when traps v3 noauth' do
+      let(:resource_override) { {} }
+      let :resource_hash do
+        {
+          ensure: :present,
+          name: '127.0.0.1',
+          port: 162,
+          type: :informs,
+          version: :v3,
+          username: 'snmpuser',
+          security: :auth
+        }.merge(resource_override)
+      end
+
+      let :expected do
+        'snmp-server host 127.0.0.1 informs version 3 '\
+        'auth snmpuser udp-port 162'
+      end
+
+      it 'configures snmp-server host ... on the target device' do
+        expect(api).to receive(:eapi_action)
+          .with(['enable', 'configure', expected], 'set snmp host')
+        subject
+      end
+
+      context 'when :name contains colons' do
+        let :resource_override do
+          { name: '127.0.0.1:snmpuser:162' }
+        end
+
+        it 'uses the first component for name' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', expected], 'set snmp host')
+          subject
+        end
+      end
+
+      context 'when :version is :v3' do
+        it 'sets security after version (not username)' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /3 auth snmpuser/], 'set snmp host')
+          subject
+        end
+      end
+
+      context 'when :version is :v2c' do
+        let :resource_override do
+          { version: :v2c, username: 'public' }
+        end
+
+        it 'sets the version to "2c"' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /version 2c/], 'set snmp host')
+          subject
+        end
+
+        it 'sets community after version (not security)' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /2c public/], 'set snmp host')
+          subject
+        end
+      end
+
+      context 'when :type is nil' do
+        let :resource_override do
+          { type: nil }
+        end
+
+        it 'sets the type to traps' do
+          expect(api).to receive(:eapi_action)
+            .with(['enable', 'configure', /127.0.0.1 traps /], 'set snmp host')
+          subject
+        end
+      end
+    end
+  end
+
+  describe '#snmp_notification_receiver_cmd' do
+    subject { api.send(:snmp_notification_receiver_cmd, opts) }
+
+    context 'when :version is :v2' do
+      let(:opts) { fixture(:snmp_host_opts) }
+      it { is_expected.to match(/version 2c/) }
+      it { is_expected.not_to match(/version 2 /) }
+    end
+  end
 end

@@ -1,0 +1,32 @@
+--- 
+  - !ruby/sym name: "127.0.0.1"
+    !ruby/sym ensure: !ruby/sym present
+    !ruby/sym port: 162
+    !ruby/sym security: noauth
+    !ruby/sym version: v3
+    !ruby/sym type: !ruby/sym traps
+    !ruby/sym username: public
+  - !ruby/sym name: "127.0.0.2"
+    !ruby/sym ensure: !ruby/sym present
+    !ruby/sym port: 162
+    !ruby/sym version: v2c
+    !ruby/sym type: !ruby/sym traps
+    !ruby/sym community: private
+  - !ruby/sym name: "127.0.0.3"
+    !ruby/sym ensure: !ruby/sym present
+    !ruby/sym port: 162
+    !ruby/sym version: v1
+    !ruby/sym type: !ruby/sym traps
+    !ruby/sym community: public
+  - !ruby/sym name: "127.0.0.4"
+    !ruby/sym ensure: !ruby/sym present
+    !ruby/sym port: 10162
+    !ruby/sym version: v2c
+    !ruby/sym type: !ruby/sym informs
+    !ruby/sym community: private
+  - !ruby/sym name: "127.0.0.4"
+    !ruby/sym ensure: !ruby/sym present
+    !ruby/sym port: 20162
+    !ruby/sym version: v1
+    !ruby/sym type: !ruby/sym traps
+    !ruby/sym community: private

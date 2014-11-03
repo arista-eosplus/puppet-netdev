@@ -30,6 +30,7 @@ group :development, :test do
   gem 'rspec-mocks', '~> 3.0.0'
   gem 'pry',                     require: false
   gem 'pry-doc',                 require: false
+  gem 'pry-stack_explorer',      require: false
   gem 'simplecov',               require: false
   gem 'puppetlabs_spec_helper'
 end

@@ -183,18 +183,5 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
     end
   end
 
-  describe '#exists?' do
-    let(:provider) { described_class.new(resource_hash) }
-    subject { provider.exists? }
-
-    context 'when ensure is absent' do
-      let(:resource_override) { { ensure: :absent } }
-      it { is_expected.to eq(false) }
-    end
-
-    context 'when ensure is present' do
-      let(:resource_override) { { ensure: :present } }
-      it { is_expected.to eq(true) }
-    end
-  end
+  it_behaves_like 'provider exists?'
 end

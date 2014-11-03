@@ -311,6 +311,157 @@ module PuppetX
           result = eapi_action([*prefix, cmd], 'set snmp trap')
           result && true || false
         end
+
+        ##
+        # snmp_notification_receivers obtains a list of all the snmp
+        # notification receivers and returns them as an Array of resource
+        # hashes suitable for the provider's new class method.  This command
+        # maps the `show snmp host` command to an array of resource hashes.
+        #
+        # @api public
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def snmp_notification_receivers
+          cmd = 'show snmp host'
+          msg = 'get snmp notification hosts'
+          result = eapi_action(cmd, msg, format: 'text')
+          text = result.first['output']
+          parse_snmp_hosts(text)
+        end
+
+        ##
+        # parse_snmp_hosts parses the raw text from the `show snmp host`
+        # command and returns an Array of resource hashes.
+        #
+        # rubocop:disable Metrics/MethodLength
+        #
+        # @param [String] text The text of the `show snmp host` output, e.g.
+        #   for three hosts:
+        #
+        #   ```
+        #   Notification host: 127.0.0.1       udp-port: 162   type: trap
+        #   user: public                       security model: v3 noauth
+        #
+        #   Notification host: 127.0.0.1       udp-port: 162   type: trap
+        #   user: smtpuser                     security model: v3 auth
+        #
+        #   Notification host: 127.0.0.2       udp-port: 162   type: trap
+        #   user: private                      security model: v2c
+        #
+        #   Notification host: 127.0.0.3       udp-port: 162   type: trap
+        #   user: public                       security model: v1
+        #
+        #   Notification host: 127.0.0.4       udp-port: 10162 type: inform
+        #   user: private                      security model: v2c
+        #
+        #   Notification host: 127.0.0.4       udp-port: 162   type: trap
+        #   user: priv@te                      security model: v1
+        #
+        #   Notification host: 127.0.0.4       udp-port: 162   type: trap
+        #   user: public                       security model: v1
+        #
+        #   Notification host: 127.0.0.4       udp-port: 20162 type: trap
+        #   user: private                      security model: v1
+        #
+        #   ```
+        #
+        # @api private
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def parse_snmp_hosts(text)
+          re = /host: ([^\s]+)\s+.*?port: (\d+)\s+type: (\w+)\s*user: (.*?)\s+security model: (.*?)\n/m # rubocop:disable Metrics/LineLength
+          text.scan(re).map do |(host, port, type, username, auth)|
+            resource_hash = { name: host, ensure: :present, port: port.to_i }
+            sec_match = /^v3 (\w+)/.match(auth)
+            resource_hash[:security] = sec_match[1] if sec_match
+            ver_match = /^(v\d)/.match(auth) # first 2 characters
+            resource_hash[:version] = ver_match[1] if ver_match
+            resource_hash[:type] = /trap/.match(type) ? :traps : :informs
+            resource_hash[:username] = username
+            resource_hash
+          end
+        end
+
+        ##
+        # snmp_notification_receiver_set takes a resource hash and configures a
+        # SNMP notification host on the target device.  In practice this method
+        # usually creates a resource because nearly all of the properties can
+        # vary and are components of a resource identifier.
+        #
+        # @option opts [String] :name ('127.0.0.1') The hostname or ip address
+        #   of the snmp notification receiver host.
+        #
+        # @option opts [String] :username ('public') The SNMP username, or
+        #   community, to use for authentication.
+        #
+        # @option opts [Fixnum] :port (162) The UDP port of the receiver.
+        #
+        # @option opts [Symbol] :version (:v3) The version, :v1, :v2, or :v3
+        #
+        # @option opts [Symbol] :type (:traps) The notification type, :traps or
+        #   :informs.
+        #
+        # @option opts [Symbol] :security (:auth) The security mode, :auth,
+        #   :noauth, or :priv
+        #
+        # @api public
+        #
+        # @return [Boolean]
+        def snmp_notification_receiver_set(opts = {})
+          prefix = %w(enable configure)
+          cmd = snmp_notification_receiver_cmd(opts)
+          result = eapi_action([*prefix, cmd], 'set snmp host')
+          result ? true : false
+        end
+
+        ##
+        # snmp_notification_receiver_cmd builds a command given a resource
+        # hash.
+        #
+        # @return [String]
+        def snmp_notification_receiver_cmd(opts = {})
+          host = opts[:name].split(':').first
+          version = /\d+/.match(opts[:version]).to_s
+          version.sub!('2', '2c')
+          cmd = "snmp-server host #{host}"
+          cmd << " #{opts[:type] || :traps}"
+          cmd << " version #{version}"
+          cmd << " #{opts[:security] || :noauth}" if version == '3'
+          cmd << " #{opts[:username]}"
+          cmd << " udp-port #{opts[:port]}"
+          cmd
+        end
+        private :snmp_notification_receiver_cmd
+
+        ##
+        # snmp_notification_receiver_remove removes an snmp-server host from
+        # the target device.
+        #
+        # @option opts [String] :name ('127.0.0.1') The hostname or ip address
+        #   of the snmp notification receiver host.
+        #
+        # @option opts [String] :username ('public') The SNMP username, or
+        #   community, to use for authentication.
+        #
+        # @option opts [Fixnum] :port (162) The UDP port of the receiver.
+        #
+        # @option opts [Symbol] :version (:v3) The version, :v1, :v2, or :v3
+        #
+        # @option opts [Symbol] :type (:traps) The notification type, :traps or
+        #   :informs.
+        #
+        # @option opts [Symbol] :security (:auth) The security mode, :auth,
+        #   :noauth, or :priv
+        #
+        # @api public
+        #
+        # @return [Boolean]
+        def snmp_notification_receiver_remove(opts = {})
+          prefix = %w(enable configure)
+          cmd = 'no ' << snmp_notification_receiver_cmd(opts)
+          result = eapi_action([*prefix, cmd], 'remove snmp host')
+          result ? true : false
+        end
       end
     end
   end
