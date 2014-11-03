@@ -1,0 +1,5 @@
+[
+  {
+    "output": "SNMP agent enabled in VRFs: default\nSNMP agent disabled: no communities or users configured\n"
+  }
+]

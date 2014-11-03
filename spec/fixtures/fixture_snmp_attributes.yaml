@@ -1,0 +1,6 @@
+--- 
+  !ruby/sym name: settings
+  !ruby/sym ensure: !ruby/sym present
+  !ruby/sym location: "Planet Earth"
+  !ruby/sym enable: !ruby/sym "true"
+  !ruby/sym contact: "Jane Doe"

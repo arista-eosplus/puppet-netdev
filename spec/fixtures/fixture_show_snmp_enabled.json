@@ -1,0 +1,5 @@
+[
+  {
+    "output": "0 SNMP packets input\n    0 Bad SNMP version errors\n    0 Unknown community name\n    0 Illegal operation for community name supplied\n    0 Encoding errors\n    0 Number of requested variables\n    0 Number of altered variables\n    0 Get-request PDUs\n    0 Get-next PDUs\n    0 Set-request PDUs\n0 SNMP packets output\n    0 Too big errors\n    0 No such name errors\n    0 Bad value errors\n    0 General errors\n    0 Response PDUs\n    0 Trap PDUs\nAccess Control\n    0 Users\n    0 Groups\n    0 Views\nSNMP logging: disabled\nSNMP agent enabled in VRFs: default\n"
+  }
+]
