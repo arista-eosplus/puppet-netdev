@@ -381,6 +381,7 @@ module PuppetX
             resource_hash
           end
         end
+        # rubocop:enable Metrics/MethodLength
 
         ##
         # snmp_notification_receiver_set takes a resource hash and configures a
@@ -461,6 +462,184 @@ module PuppetX
           cmd = 'no ' << snmp_notification_receiver_cmd(opts)
           result = eapi_action([*prefix, cmd], 'remove snmp host')
           result ? true : false
+        end
+
+        ##
+        # snmp_users retrieves all of the SNMP users  defined on the target
+        # device and returns an Array of Hash objects suitable for use as a
+        # resource hash to the provider's initializer method.
+        #
+        # @api public
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def snmp_users
+          cmd = 'show snmp user'
+          result = eapi_action(cmd, 'get snmp users', format: 'text')
+          text = result.first['output']
+          users = parse_snmp_users(text)
+          text = running_config
+          users.each do |h|
+            cmd = "snmp-server user #{h[:name]} #{h[:roles]} #{h[:version]}"
+            password = snmp_user_password_hash(text, cmd)[:auth]
+            h[:password] = password if password
+          end
+        end
+
+        ##
+        # parse_snmp_users takes the text output from the `show snmp user` EAPI
+        # command and parses the text into structured data suitable for use as
+        # a resource has to the provider initializer method.
+        #
+        # ```
+        #
+        # User name      : jeff
+        # Security model : v3
+        # Engine ID      : f5717f00420008177800
+        # Authentication : SHA
+        # Privacy        : AES-128
+        # Group          : developers
+        #
+        # User name      : nigel
+        # Security model : v2c
+        # Group          : sysops (not configured)
+        #
+        # User name      : nigel
+        # Security model : v3
+        # Engine ID      : f5717f00420008177800
+        # Authentication : SHA
+        # Privacy        : AES-128
+        # Group          : sysops
+        # ```
+        #
+        # rubocop:disable Metrics/CyclomaticComplexity
+        # rubocop:disable Metrics/MethodLength
+        #
+        # @param [String] text The text to parse
+        #
+        # @api private
+        #
+        # @return [Array<Hash<Symbol,Object>>] Array of resource hashes.
+        def parse_snmp_users(text)
+          text.split("\n\n").map do |user_s|
+            user_s.scan(/^(\w+).*?: (.*)/).each_with_object({}) do |(h, v), m|
+              key = SNMP_USER_PARAM[h.downcase.intern] || h.downcase.intern
+              m[key] = case key
+                       when :privacy  then /AES/.match(v) ? :aes128 : :des
+                       when :version  then v.sub('v2c', 'v2').intern
+                       when :auth     then v.downcase.intern
+                       when :roles    then v.sub(/ \(.*?\)/, '')
+                       else v.downcase
+                       end
+            end
+          end
+        end
+        # rubocop:enable Metrics/MethodLength
+
+        # Map SNMP headings from `show snmp user` to snmp_user parameter names
+        SNMP_USER_PARAM = {
+          user: :name,
+          engine: :engine_id,
+          security: :version,
+          authentication: :auth,
+          privacy: :privacy,
+          group: :roles
+        }
+
+        ##
+        # snmp_user_set creates or updates an SNMP user account on the target
+        # device.
+        #
+        # rubocop:disable Metrics/MethodLength
+        #
+        # @option opts [String] :name ('johndoe') The username
+        #
+        # @option opts [Array] :roles (['developers']) The group, as an Array,
+        #   this user is associated with.
+        #
+        # @option opts [Symbol] :version (:v2) The snmp version for this user
+        #   account.
+        #
+        # @option opts [Symbol] :auth (:sha) The authentication digest method
+        #
+        # @option opts [Symbol] :privacy (:aes) The encryption scheme for
+        #   privacy.
+        #
+        # @option opts [String] :password ('abc123') The password to
+        #   configure for authentication and privacy.
+        #
+        # @api public
+        #
+        # @return [Hash<Symbol,Object>] Updated properties, e.g. the password
+        #   hash which is idempotent.
+        def snmp_user_set(opts = {})
+          prefix = %w(enable configure)
+          group = [*opts[:roles]].first
+          fail ArgumentError, 'at least one role is required' unless group
+          version = opts[:version].to_s.sub('v2', 'v2c')
+          cmd = user_cmd = "snmp-server user #{opts[:name]} #{group} #{version}"
+          if opts[:password] && version == 'v3'
+            privacy = opts[:privacy].to_s.scan(/aes|des/).first
+            fail ArgumentError,
+                 'privacy is required when managing passwords' unless privacy
+            cmd += " auth #{opts[:auth] || 'sha'} #{opts[:password]} "\
+              "priv #{privacy} #{opts[:password]}"
+          end
+          eapi_action([*prefix, cmd], 'configure snmp user')
+          hash = snmp_user_password_hash(running_config, user_cmd)
+          { password: hash[:auth] }
+        end
+        # rubocop:enable Metrics/MethodLength
+
+        ##
+        # snmp_user_destroy removes an SNMP user from the target device
+        #
+        # @option opts [String] :name ('johndoe') The username
+        #
+        # @option opts [Array] :roles (['developers']) The group, as an Array,
+        #   this user is associated with.
+        #
+        # @option opts [Symbol] :version (:v2) The snmp version for this user
+        #   account.
+        #
+        # @option opts [Symbol] :auth (:sha) The authentication digest method
+        #
+        # @option opts [Symbol] :privacy (:aes) The encryption scheme for
+        #   privacy.
+        #
+        # @option opts [String] :password ('abc123') The password to
+        #   configure for authentication and privacy.
+        #
+        # @api public
+        #
+        # @return [Hash<Symbol,Object>] Updated properties, e.g. the password
+        #   hash which is idempotent.
+        #
+        # @return [String]
+        def snmp_user_destroy(opts = {})
+          prefix = %w(enable configure)
+          group = [*opts[:roles]].first
+          version = opts[:version].to_s.sub('v2', 'v2c')
+          cmd = "no snmp-server user #{opts[:name]} #{group} #{version}"
+          eapi_action([*prefix, cmd], 'remove snmp user')
+          {}
+        end
+
+        ##
+        # snmp_user_password obtains the password hash from the device in order
+        # to provide an idempotent configuration value.
+        #
+        # @param [String] running_config The text of the current running
+        #   configuration.
+        #
+        # @param [String] user_cmd The prefix of the command that identifies
+        #   the user in the running-config.  e.g. ('snmp-server user jeff
+        #   developers v3')
+        #
+        # @return [Hash<Symbol,String>] The hashes for :auth and :privacy
+        def snmp_user_password_hash(running_config, user_cmd)
+          regexp = /#{user_cmd} .*?auth \w+\s+(.*?)\s+priv \w+\s+(.*?)\s/
+          (auth_hash, priv_hash) = running_config.scan(regexp).first
+          { auth: auth_hash, privacy: priv_hash }
         end
       end
     end

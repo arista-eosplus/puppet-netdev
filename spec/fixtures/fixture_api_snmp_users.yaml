@@ -1,0 +1,16 @@
+--- 
+  - !ruby/sym name: jeff
+    !ruby/sym version: !ruby/sym v3
+    !ruby/sym engine_id: f5717f00420008177800
+    !ruby/sym auth: !ruby/sym sha
+    !ruby/sym privacy: !ruby/sym aes128
+    !ruby/sym roles: developers
+  - !ruby/sym name: nigel
+    !ruby/sym version: !ruby/sym v2
+    !ruby/sym roles: sysops
+  - !ruby/sym name: nigel
+    !ruby/sym version: !ruby/sym v3
+    !ruby/sym engine_id: f5717f00420008177800
+    !ruby/sym auth: !ruby/sym sha
+    !ruby/sym privacy: !ruby/sym aes128
+    !ruby/sym roles: sysops

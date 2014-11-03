@@ -246,7 +246,6 @@ describe PuppetX::NetDev::EosApi do
 
   describe '#snmp_community_set' do
     subject { api.snmp_community_set(resource_hash) }
-    let(:prefix) { %w(enable configure) }
 
     context 'when the api call succeeds' do
       before :each do
@@ -302,7 +301,6 @@ describe PuppetX::NetDev::EosApi do
 
   describe '#snmp_community_destroy' do
     subject { api.snmp_community_destroy(resource_hash) }
-    let(:prefix) { %w(enable configure) }
 
     let :resource_hash do
       { name: 'public' }
@@ -610,6 +608,235 @@ describe PuppetX::NetDev::EosApi do
       let(:opts) { fixture(:snmp_host_opts) }
       it { is_expected.to match(/version 2c/) }
       it { is_expected.not_to match(/version 2 /) }
+    end
+  end
+
+  describe '#parse_snmp_users' do
+    let(:text) { fixture(:show_snmp_user_raw_text) }
+    subject { api.parse_snmp_users(text) }
+
+    it 'returns 3 elements' do
+      expect(subject.size).to eq(3)
+    end
+
+    it 'includes nigel v2' do
+      expected = { name: 'nigel', version: :v2, roles: 'sysops' }
+      expect(subject).to include(expected)
+    end
+
+    it 'include nigel v3' do
+      expected = {
+        name: 'nigel',
+        version: :v3,
+        roles: 'sysops',
+        engine_id: 'f5717f00420008177800',
+        auth: :sha,
+        privacy: :aes128
+      }
+      expect(subject).to include(expected)
+    end
+
+    it 'includes jeff v3' do
+      expected = {
+        name: 'jeff',
+        version: :v3,
+        roles: 'developers',
+        engine_id: 'f5717f00420008177800',
+        auth: :sha,
+        privacy: :aes128
+      }
+      expect(subject).to include(expected)
+    end
+  end
+
+  describe '#snmp_users' do
+    subject { api.snmp_users }
+    before :each do
+      allow(api).to receive(:eapi_action)
+        .with('show snmp user', 'get snmp users', format: 'text')
+        .and_return(fixture(:show_snmp_user))
+      allow(api).to receive(:running_config)
+        .and_return(fixture(:running_config))
+    end
+
+    it 'returns 3 items' do
+      expect(subject.size).to eq(3)
+    end
+
+    it 'includes nigel v2' do
+      expected = { name: 'nigel', version: :v2, roles: 'sysops' }
+      expect(subject).to include(expected)
+    end
+
+    it 'include nigel v3' do
+      expected = {
+        name: 'nigel',
+        version: :v3,
+        roles: 'sysops',
+        engine_id: 'f5717f00420008177800',
+        auth: :sha,
+        privacy: :aes128
+      }
+      expect(subject).to include(expected)
+    end
+
+    it 'includes jeff v3' do
+      expected = {
+        name: 'jeff',
+        version: :v3,
+        roles: 'developers',
+        engine_id: 'f5717f00420008177800',
+        password: '78093f54260696d982f92ccc2d420b285151c3c8',
+        auth: :sha,
+        privacy: :aes128
+      }
+      expect(subject).to include(expected)
+    end
+  end
+
+  describe '#snmp_user_set' do
+    subject { api.snmp_user_set(opts) }
+
+    let :opts do
+      {
+        name: 'jeff',
+        roles: ['developers'],
+        version: :v3,
+        auth: :sha,
+        privacy: :aes,
+        password: 'abc123'
+      }.merge(opts_override)
+    end
+
+    let(:opts_override) { Hash.new }
+
+    before :each do
+      allow(api).to receive(:eapi_action)
+      allow(api).to receive(:running_config)
+        .and_return(fixture(:running_config))
+    end
+
+    it { is_expected.to be_a Hash }
+    it 'returns the hash value of the cleartext password' do
+      expected = '78093f54260696d982f92ccc2d420b285151c3c8'
+      expect(subject).to include(password: expected)
+    end
+
+    context 'when there is more than one role' do
+      let(:opts_override) do
+        { roles: %w(sysops developers) }
+      end
+
+      it 'uses only the first specified role' do
+        expected = ['enable', 'configure',
+                    'snmp-server user jeff sysops v3 auth '\
+                    'sha abc123 priv aes abc123']
+        expect(api).to receive(:eapi_action)
+          .with(expected, 'configure snmp user')
+        subject
+      end
+    end
+
+    context 'then the version is :v2' do
+      let(:opts_override) do
+        { version: :v2 }
+      end
+
+      it 'uses v2c when configuring the device' do
+        expected = ['enable', 'configure',
+                    'snmp-server user jeff developers v2c']
+        expect(api).to receive(:eapi_action)
+          .with(expected, 'configure snmp user')
+        subject
+      end
+    end
+
+    context 'then the version is not v3 (v1)' do
+      let(:opts_override) do
+        { version: :v1 }
+      end
+
+      it 'ignores auth and privacy options' do
+        expected = ['enable', 'configure',
+                    'snmp-server user jeff developers v1']
+        expect(api).to receive(:eapi_action)
+          .with(expected, 'configure snmp user')
+        subject
+      end
+    end
+
+    context 'with name, version, roles, and password but not privacy' do
+      let(:opts) do
+        { name: 'jeff', version: :v3, roles: %w(sysops), password: 'abc123' }
+      end
+
+      it 'throws an ArgumentError that privacy is required' do
+        expect { subject }.to raise_error ArgumentError, /privacy is required/
+      end
+    end
+
+    context 'with name, version and nothing else' do
+      let(:opts) do
+        { name: 'jeff', version: :v2 }
+      end
+
+      it 'throws an ArgumentError that role is required' do
+        expect { subject }.to raise_error ArgumentError, /role is required/
+      end
+    end
+  end
+
+  describe '#snmp_user_destroy' do
+    subject { api.snmp_user_destroy(opts) }
+
+    let :opts do
+      {
+        name: 'jeff',
+        roles: ['sysops'],
+        version: :v3
+      }.merge(opts_override)
+    end
+
+    let(:opts_override) { Hash.new }
+
+    [:v1, :v3].each do |version|
+      context "when version #{version.inspect}" do
+        let :opts_override do
+          { version: version }
+        end
+
+        it "uses #{version} in the `no snmp-user ...` API call" do
+          prefix = %w(enable configure)
+          expected = [*prefix, "no snmp-server user jeff sysops #{version}"]
+          expect(api).to receive(:eapi_action)
+            .with(expected, 'remove snmp user')
+          subject
+        end
+      end
+    end
+
+    context 'when version :v2' do
+      let :opts_override do
+        { version: :v2 }
+      end
+
+      it 'uses v2c in the `no snmp-user ...` API call' do
+        expected = [*prefix, 'no snmp-server user jeff sysops v2c']
+        expect(api).to receive(:eapi_action).with(expected, 'remove snmp user')
+        subject
+      end
+    end
+
+    context 'when multiple roles are specified' do
+      let :opts_override do
+        { roles: %w(one two three) }
+      end
+
+      it 'uses the the first role' do
+        expected = [*prefix, 'no snmp-server user jeff one v3']
+        expect(api).to receive(:eapi_action).with(expected, 'remove snmp user')
+        subject
+      end
     end
   end
 end

@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'net_http_unix'
+require 'puppet_x/net_dev/eos_api/common_methods'
 require 'puppet_x/net_dev/eos_api/snmp_methods'
 
 ##
@@ -30,6 +31,7 @@ module PuppetX
       attr_reader :password
 
       # Include type specific methods, broken out for clear organization.
+      include CommonMethods
       include SnmpMethods
 
       ##
