@@ -1,0 +1,7 @@
+--- 
+  - !ruby/sym name: settings
+    !ruby/sym enable: true
+    !ruby/sym timeout: 50
+    !ruby/sym retransmit_count: 5
+    !ruby/sym key_format: 7
+    !ruby/sym key: "070E234F1F5B4A"
