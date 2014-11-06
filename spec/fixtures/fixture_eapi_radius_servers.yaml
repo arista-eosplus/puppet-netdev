@@ -1,0 +1,25 @@
+--- 
+  - !ruby/sym auth_port: 1812
+    !ruby/sym acct_port: 1813
+    !ruby/sym hostname: "10.11.12.13"
+    !ruby/sym key_format: 7
+    !ruby/sym key: "1513090F557878"
+  - !ruby/sym auth_port: 1811
+    !ruby/sym acct_port: 1813
+    !ruby/sym hostname: "10.11.12.13"
+  - !ruby/sym auth_port: 1811
+    !ruby/sym acct_port: 1814
+    !ruby/sym hostname: "10.11.12.13"
+  - !ruby/sym auth_port: 1812
+    !ruby/sym acct_port: 1814
+    !ruby/sym hostname: "10.11.12.13"
+  - !ruby/sym auth_port: 1024
+    !ruby/sym acct_port: 2048
+    !ruby/sym hostname: "10.11.12.13"
+    !ruby/sym timeout: 30
+    !ruby/sym retransmit_count: 5
+    !ruby/sym key_format: 7
+    !ruby/sym key: "011204070A5955"
+  - !ruby/sym auth_port: 1812
+    !ruby/sym acct_port: 1813
+    !ruby/sym hostname: "10.11.12.14"
