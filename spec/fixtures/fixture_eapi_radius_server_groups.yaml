@@ -1,0 +1,25 @@
+--- 
+  - !ruby/sym name: RAD-SV1
+    !ruby/sym servers: 
+      - !ruby/sym hostname: "10.11.12.13"
+        !ruby/sym auth_port: "1024"
+        !ruby/sym acct_port: "2048"
+      - !ruby/sym hostname: "10.11.12.13"
+        !ruby/sym auth_port: 1812
+        !ruby/sym acct_port: "1814"
+  - !ruby/sym name: RAD-SV2
+    !ruby/sym servers: 
+      - !ruby/sym hostname: "10.11.12.13"
+        !ruby/sym auth_port: "1024"
+        !ruby/sym acct_port: "2048"
+      - !ruby/sym hostname: "10.11.12.13"
+        !ruby/sym auth_port: 1812
+        !ruby/sym acct_port: "1814"
+      - !ruby/sym hostname: "10.11.12.14"
+        !ruby/sym auth_port: 1812
+        !ruby/sym acct_port: 1813
+  - !ruby/sym name: RAD-SV3
+    !ruby/sym servers: 
+      - !ruby/sym hostname: "10.11.12.13"
+        !ruby/sym auth_port: "1024"
+        !ruby/sym acct_port: "2048"
