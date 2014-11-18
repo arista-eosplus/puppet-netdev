@@ -1,0 +1,19 @@
+--- 
+  - !ruby/sym port: 4949
+    !ruby/sym hostname: "1.2.3.4"
+    !ruby/sym timeout: 6
+    !ruby/sym key_format: 7
+    !ruby/sym key: "06070D221D1C5A"
+    !ruby/sym multiplex: true
+  - !ruby/sym port: 49
+    !ruby/sym hostname: "1.2.3.4"
+    !ruby/sym timeout: 10
+    !ruby/sym multiplex: false
+  - !ruby/sym port: 49
+    !ruby/sym hostname: "1.2.3.5"
+    !ruby/sym timeout: 10
+    !ruby/sym multiplex: false
+  - !ruby/sym port: 50
+    !ruby/sym hostname: "1.2.3.5"
+    !ruby/sym timeout: 10
+    !ruby/sym multiplex: false
