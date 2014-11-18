@@ -33,3 +33,11 @@ RSpec.shared_examples 'provider instances' do |opts = { size: 0 }|
     subject.each { |p| expect(p.ensure).to eq(:present) }
   end
 end
+
+RSpec.shared_examples 'attribute' do |opts = { }|
+  opts.each do |attribute, expected_value|
+    it "##{attribute} equates to #{expected_value}" do
+      expect(subject.send(attribute.intern)).to eq(expected_value)
+    end
+  end
+end

@@ -1,0 +1,13 @@
+--- 
+  - !ruby/sym name: TAC-GR
+    !ruby/sym servers: 
+      - !ruby/sym hostname: "1.2.3.4"
+        !ruby/sym port: 4949
+      - !ruby/sym hostname: "1.2.3.5"
+        !ruby/sym port: 49
+  - !ruby/sym name: TAC-GR-EMPTY
+    !ruby/sym servers: []
+  - !ruby/sym name: TAC-GR2
+    !ruby/sym servers: 
+      - !ruby/sym hostname: "1.2.3.5"
+        !ruby/sym port: 50
