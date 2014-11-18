@@ -3,20 +3,26 @@
 
 ignore(/^coverage\//)
 
-guard :rspec, cmd: 'rspec' do
-  watch(/^spec\/.+_spec\.rb$/)
-  watch(/^lib\/(.+)\.rb$/) { |m| "spec/unit/#{m[1]}_spec.rb" }
-  watch('spec/spec_helper.rb')  { 'spec' }
+group :specs, halt_on_fail: true do
+  guard :rspec, cmd: 'bundle exec rspec' do
+    watch(/^spec\/.+_spec\.rb$/)
+    watch(/^lib\/(.+)\.rb$/) { |m| "spec/unit/#{m[1]}_spec.rb" }
+    watch('spec/spec_helper.rb')  { 'spec' }
+  end
 end
 
-guard :rubocop do
-  watch(/.+\.rb$/)
-  watch(/(?:.+\/)?\.rubocop\.yml$/) { |m| File.dirname(m[0]) }
+group :style do
+  guard :rubocop do
+    watch(/.+\.rb$/)
+    watch(/(?:.+\/)?\.rubocop\.yml$/) { |m| File.dirname(m[0]) }
+  end
 end
 
 # Add files and commands to this file, like the example:
 #   watch(%r{file/path}) { `command(s)` }
 #
-guard :shell do
-  watch(/^lib\/(.+)\.rb$/) { |m| `yard doc #{m[0]} --quiet` }
+group :docs do
+  guard :shell do
+    watch(/^lib\/(.+)\.rb$/) { |m| `yard doc #{m[0]} --quiet` }
+  end
 end
