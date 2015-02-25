@@ -1,0 +1,11 @@
+---
+Ethernet1:
+  :name: Ethernet1
+  :type: ethernet
+  :description: test interface
+  :shutdown: false
+  :sflow: true
+  :flowcontrol_send: 'on'
+  :flowcontrol_receive: 'on'
+  :speed: 100gfull
+  :forced: true

@@ -2,50 +2,36 @@
 
 require 'puppet/type'
 require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:network_snmp).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::NetDev::EosProviderMethods
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::NetDev::EosProviderMethods
-  # Mix in common provider class methods (e.g. self.prefetch)
-  extend PuppetX::NetDev::EosProviderClassMethods
+  extend PuppetX::NetDev::EosApi
 
-  def initialize(resource = {})
-    super(resource)
-    @property_flush = {}
-  end
-
-  ##
-  # Only one instance is ever returned, managing the overall SNMP state on the
-  # device.
   def self.instances
-    provider_hash = api.snmp_attributes
+    result = node.api('snmp').get
+    provider_hash = { name: 'settings', ensure: :present }
+    provider_hash.merge!(result)
     [new(provider_hash)]
   end
 
-  ##
-  # enable SNMP by setting the "public" community string to "ro"
   def enable=(value)
-    case value
-    when :true
-      api.snmp_enable = true
-    when :false
-      api.snmp_enable = false
-    end
-    @property_hash[:enable] = value
+    not_supported 'enable'
   end
 
   def contact=(value)
-    api.snmp_contact = value
+    node.api('snmp').set_contact(value: value)
     @property_hash[:contact] = value
   end
 
   def location=(value)
-    api.snmp_location = value
+    node.api('snmp').set_location(value: value)
     @property_hash[:location] = value
   end
 

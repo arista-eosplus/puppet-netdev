@@ -1,138 +1,184 @@
-# encoding: utf-8
-
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 require 'spec_helper'
 
-describe Puppet::Type.type(:network_snmp).provider(:eos) do
-  let(:type) { Puppet::Type.type(:network_snmp) }
+include FixtureHelpers
 
-  let :resource do
+describe Puppet::Type.type(:network_snmp).provider(:eos) do
+
+  # Puppet RAL memoized methods
+  let(:resource) do
     resource_hash = {
       name: 'settings',
+      contact: 'network operations',
+      location: 'data center',
       enable: :true,
-      location: 'Planet Earth',
-      contact: 'Jane Doe'
+      provider: described_class.name
     }
-    type.new(resource_hash)
+    Puppet::Type.type(:network_snmp).new(resource_hash)
   end
 
   let(:provider) { resource.provider }
 
+  let(:api) { double('snmp') }
+
+  def snmp
+    snmp = Fixtures[:snmp]
+    return snmp if snmp
+    fixture('snmp', dir: File.dirname(__FILE__))
+  end
+
+  # Stub the Api method class to obtain all vlans.
   before :each do
-    allow(described_class.api).to receive(:snmp_attributes)
-      .and_return(fixture(:snmp_attributes))
+    allow(described_class.node).to receive(:api).with('snmp').and_return(api)
+    allow(provider.node).to receive(:api).with('snmp').and_return(api)
   end
 
   context 'class methods' do
+
+    before { allow(api).to receive(:get).and_return(snmp) }
+
     describe '.instances' do
       subject { described_class.instances }
 
       it { is_expected.to be_an Array }
 
-      it 'has one instance' do
-        expect(subject.size).to eq(1)
+      it 'has only one entry' do
+        expect(subject.size).to eq 1
       end
 
-      it 'contains Network_snmp[settings]' do
+      it 'has an instance for snmp settings' do
         instance = subject.find { |p| p.name == 'settings' }
         expect(instance).to be_a described_class
       end
 
-      describe 'Network_snmp[settings]' do
+      context "network_snmp { 'settings': }" do
         subject { described_class.instances.find { |p| p.name == 'settings' } }
 
         include_examples 'provider resource methods',
                          name: 'settings',
-                         enable: :true,
-                         contact: 'Jane Doe',
-                         location: 'Planet Earth',
-                         exists?: true
+                         contact: 'network operations',
+                         location: 'data center',
+                         enable: :true
       end
     end
 
     describe '.prefetch' do
-      let(:resources) { { 'settings' => type.new(name: 'settings') } }
+      let :resources do
+        {
+          'settings' => Puppet::Type.type(:network_snmp)
+            .new(name: 'settings'),
+          'alternative' => Puppet::Type.type(:network_snmp)
+            .new(name: 'alternative')
+        }
+      end
+
       subject { described_class.prefetch(resources) }
 
-      it 'updates the provider instance of managed resources' do
-        expect(resources['settings'].provider.contact).to eq(:absent)
+      it 'resource providers are absent prior to calling .prefetch' do
+        resources.values.each do |rsrc|
+          expect(rsrc.provider.contact).to eq(:absent)
+          expect(rsrc.provider.location).to eq(:absent)
+          expect(rsrc.provider.enable).to eq(:absent)
+        end
+      end
+
+      it 'sets the provider instance of the managed resource' do
         subject
-        expect(resources['settings'].provider.contact).to eq('Jane Doe')
+        expect(resources['settings'].provider.name).to eq 'settings'
+        expect(resources['settings'].provider.exists?).to be_truthy
+        expect(resources['settings'].provider.contact).to eq 'network operations'
+        expect(resources['settings'].provider.location).to eq 'data center'
+        expect(resources['settings'].provider.enable).to eq :true
+      end
+
+      it 'does not set the provider instance of the unmanaged resource' do
+        subject
+        expect(resources['alternative'].provider.name).to eq('alternative')
+        expect(resources['alternative'].provider.exists?).to be_falsey
+        expect(resources['alternative'].provider.contact).to eq :absent
+        expect(resources['alternative'].provider.location).to eq :absent
+        expect(resources['alternative'].provider.enable).to eq :absent
+      end
+    end
+  end
+
+  context 'resource (instance) methods' do
+
+    describe '#exists?' do
+      subject { provider.exists? }
+
+      context 'when the resource does not exist on the system' do
+        it { is_expected.to be_falsey }
+      end
+
+      context 'when the resource exists on the system' do
+        let(:provider) do
+          allow(api).to receive(:get).and_return(snmp)
+          described_class.instances.first
+        end
+        it { is_expected.to be_truthy }
       end
     end
 
-    describe '#enable=' do
-      subject { provider.enable = value }
-
-      before :each do
-        allow(provider.api).to receive(:snmp_enable=)
-      end
-
-      context 'when #enable=(:true)' do
-        let(:value) { :true }
-
-        it 'calls api.snmp_enable=true' do
-          expect(provider.api).to receive(:snmp_enable=).with(true)
-          subject
-        end
-
-        it 'sets enable to :true in the provider' do
-          expect(provider.enable).not_to eq(:true)
-          subject
-          expect(provider.enable).to eq(:true)
-        end
-      end
-
-      context 'when #enable=(:false)' do
-        let(:value) { :false }
-
-        it 'calls api.snmp_enable=false' do
-          expect(provider.api).to receive(:snmp_enable=).with(false)
-          subject
-        end
-
-        it 'sets enable to :true in the provider' do
-          expect(provider.enable).not_to eq(:true)
-          subject
-          expect(provider.enable).to eq(:false)
-        end
+    describe '#contact=(val)' do
+      it 'updates contact in the provider' do
+        expect(api).to receive(:set_contact).with(value: 'foo')
+        provider.contact = 'foo'
+        expect(provider.contact).to eq('foo')
       end
     end
 
-    describe '#contact=' do
-      subject { provider.contact = 'John Doe' }
-
-      before :each do
-        allow(provider.api).to receive(:snmp_contact=)
-      end
-
-      it 'calls api.snmp_contact = "John Doe"' do
-        expect(provider.api).to receive(:snmp_contact=).with('John Doe')
-        subject
-      end
-
-      it 'sets contact to "John Doe" in the provider' do
-        expect(provider.contact).not_to eq('John Doe')
-        subject
-        expect(provider.contact).to eq('John Doe')
+    describe '#location=(val)' do
+      it 'updates location in the provider' do
+        expect(api).to receive(:set_location).with(value: 'foo')
+        provider.location = 'foo'
+        expect(provider.location).to eq('foo')
       end
     end
 
-    describe '#location=' do
-      subject { provider.location = 'Planet Earth' }
+    describe '#enable=(value)' do
+      let(:vid) { resource[:name] }
 
-      before :each do
-        allow(provider.api).to receive(:snmp_location=)
+      it 'updates enable with value :true' do
+        expect(api).to receive(:set_enable).with(value: true)
+        provider.enable = :true
+        expect(provider.enable).to eq(:true)
       end
 
-      it 'calls api.snmp_location = "Planet Earth"' do
-        expect(provider.api).to receive(:snmp_location=).with('Planet Earth')
-        subject
-      end
-
-      it 'sets location to "Planet Earth" in the provider' do
-        expect(provider.location).not_to eq('Planet Earth')
-        subject
-        expect(provider.location).to eq('Planet Earth')
+      it 'updates enable with value :false' do
+        expect(api).to receive(:set_enable).with(value: false)
+        provider.enable = :false
+        expect(provider.enable).to eq(:false)
       end
     end
   end

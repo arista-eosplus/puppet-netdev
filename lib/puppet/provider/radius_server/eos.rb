@@ -1,22 +1,25 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/eos/provider'
+require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:radius_server).provide(:eos) do
+
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    api = eapi.Radius
-    servers = api.servers
-    servers.map do |api_attributes|
-      puppet_attributes = { name: namevar(api_attributes), ensure: :present, }
-      new(api_attributes.merge(puppet_attributes))
+    api = node.api('radius').get
+    api[:servers].map do |attrs|
+      provider_hash = { name: namevar(attrs), ensure: :present }
+      provider_hash.merge!(attrs)
+      new(provider_hash)
     end
   end
 
@@ -66,8 +69,8 @@ Puppet::Type.type(:radius_server).provide(:eos) do
   end
 
   def flush
-    api = eapi.Radius
-    desired_state = @property_hash.merge(@property_flush)
+    api = node.api('radius')
+    desired_state = @property_hash.merge!(@property_flush)
     validate_identity(desired_state)
     case desired_state[:ensure]
     when :present

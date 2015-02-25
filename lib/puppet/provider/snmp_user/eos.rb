@@ -2,20 +2,21 @@
 
 require 'puppet/type'
 require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:snmp_user).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::NetDev::EosProviderMethods
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::NetDev::EosProviderMethods
-  # Mix in common provider class methods (e.g. self.prefetch)
-  extend PuppetX::NetDev::EosProviderClassMethods
+  extend PuppetX::NetDev::EosApi
+
 
   def self.instances
-    users = api.snmp_users
+    users = netdev('snmp').snmp_users
     resource_hash_ary = users.map do |user_hsh|
       user_hsh.merge(
         ensure: :present,
@@ -78,9 +79,9 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
 
     case new_property_hash[:ensure]
     when :absent, 'absent'
-      update = api.snmp_user_destroy(new_property_hash)
+      update = netdev('snmp').snmp_user_destroy(new_property_hash)
     else
-      update = api.snmp_user_set(new_property_hash)
+      update = netdev('snmp').snmp_user_set(new_property_hash)
     end
 
     @property_hash = new_property_hash.merge(update)

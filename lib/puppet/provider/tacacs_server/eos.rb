@@ -2,28 +2,30 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/eos/provider'
+require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:tacacs_server).provide(:eos) do
+
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    api = eapi.Tacacs
-    servers = api.servers
-    servers.map do |api_attributes|
-      puppet_attributes = { name: namevar(api_attributes), ensure: :present }
-      single_connection = api_attributes[:multiplex] ? :true : :false
-      puppet_attributes[:single_connection] = single_connection
+    api = node.api('tacacs').get
+    api[:servers].map do |attrs|
+      provider_hash = { name: namevar(attrs), ensure: :present }
+      single_connection = attrs[:multiplex] ? :true : :false
+      provider_hash[:single_connection] = single_connection
       # Filter out API attributes e.g. :multiplex => :single_connection
-      resource_attributes = api_attributes.select do |key, _|
+      resource_attributes = attrs.select do |key, _|
         resource_type.allattrs.include?(key)
       end
-      new(resource_attributes.merge(puppet_attributes))
+      new(resource_attributes.merge(provider_hash))
     end
   end
 
@@ -69,7 +71,7 @@ Puppet::Type.type(:tacacs_server).provide(:eos) do
   end
 
   def flush
-    api = eapi.Tacacs
+    api = node.api('tacacs')
     desired_state = @property_hash.merge(@property_flush)
     # Handle :single_connection => :multiplex mapping
     multiplex = desired_state.delete(:single_connection)

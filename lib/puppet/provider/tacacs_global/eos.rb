@@ -1,21 +1,24 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/eos/provider'
+require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:tacacs_global).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    api = eapi.Tacacs
-    global_settings = api.getall
-    global_settings.map { |rsrc_hash| new(rsrc_hash) }
+    resource = node.api('tacacs').get
+    provider_hash = { name: 'settings' }
+    provider_hash.merge!(resource[:global])
+    [new(provider_hash)]
   end
 
   def initialize(resource = {})
@@ -26,7 +29,7 @@ Puppet::Type.type(:tacacs_global).provide(:eos) do
   end
 
   def enable=(value)
-    fail ArgumentError, 'Tacacs cannot be disabled on EOS' unless value
+    not_supported 'enable'
   end
 
   def key=(value)
@@ -45,15 +48,14 @@ Puppet::Type.type(:tacacs_global).provide(:eos) do
   end
 
   def retransmit_count=(value)
-    fail NotImplementedError,
-      'Tacacs retransmit count cannot be configured on EOS'
+    not_supported 'retransmit_count'
   end
 
   def flush
-    api = eapi.Tacacs
+    api = node.api('tacacs')
     opts = @property_hash.merge(@property_flush)
-    api.set_global_key(opts) if @flush_key
-    api.set_timeout(opts) if @flush_timeout
+    api.set_global_key(value: opts[:key], key_format: opts[:key_format]) if @flush_key
+    api.set_global_timeout(value: opts[:timeout]) if @flush_timeout
     # Update the state in the model to reflect the flushed changes
     @property_hash.merge!(@property_flush)
   end

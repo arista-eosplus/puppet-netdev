@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/eos/provider'
+require 'puppet_x/net_dev/eos_api'
 
 Puppet::Type.type(:ntp_config).provide(:eos) do
 
@@ -9,25 +9,20 @@ Puppet::Type.type(:ntp_config).provide(:eos) do
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
 
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
-
-  def initialize(resource = {})
-    super(resource)
-    @property_flush = {}
-  end
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    result = eapi.Ntp.get
+    result = node.api('ntp').get
     provider_hash = { name: 'settings', ensure: :present }
-    provider_hash[:source_interface] = result['source_interface']
+    provider_hash[:source_interface] = result[:source_interface]
     [new(provider_hash)]
   end
 
   def source_interface=(val)
-    eapi.Ntp.set_source_interface(value: val)
+    node.api('ntp').set_source_interface(value: val)
     @property_hash[:source_interface] = val
   end
 

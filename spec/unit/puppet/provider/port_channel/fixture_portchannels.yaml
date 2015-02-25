@@ -1,0 +1,12 @@
+---
+Port-Channel1:
+  :type: portchannel
+  :lacp_mode: 'on' 
+  :members: ['Ethernet1', 'Ethernet2']
+  :minimum_links: '2' 
+  :lacp_fallback: static
+  :lacp_timeout: '100'
+
+Ethernet1:
+  :type: ethernet
+

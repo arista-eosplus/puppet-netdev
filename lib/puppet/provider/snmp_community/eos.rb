@@ -2,27 +2,36 @@
 
 require 'puppet/type'
 require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:snmp_community).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::NetDev::EosProviderMethods
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::NetDev::EosProviderMethods
-  # Mix in common provider class methods (e.g. self.prefetch)
-  extend PuppetX::NetDev::EosProviderClassMethods
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    communities = api.snmp_communities
-    communities.each { |hsh| hsh[:ensure] = :present }
-    communities.map { |resource_hash| new(resource_hash) }
+    result = node.api('snmp').get
+    result[:communities].map do |name, attrs|
+      provider_hash = { name: name, ensure: :present }
+      provider_hash[:group] = attrs[:access].to_sym
+      provider_hash[:acl] = attrs[:acl]
+      new(provider_hash)
+    end
   end
 
-  def initialize(resource = {})
-    super(resource)
-    @property_flush = {}
+  def group=(value)
+    node.api('snmp').set_community_access(resource[:name], value.to_s)
+    @property_hash[:group] = value
+  end
+
+  def acl=(value)
+    node.api('snmp').set_community_acl(resource[:name], value: value)
+    @property_hash[:acl] = value
   end
 
   def exists?
@@ -30,35 +39,15 @@ Puppet::Type.type(:snmp_community).provide(:eos) do
   end
 
   def create
-    @property_flush = resource.to_hash.select do |key, _|
-      [:name, :group, :acl].include? key
-    end
-    @property_flush[:ensure] = :present
+    node.api('snmp').add_community(resource[:name])
+    @property_hash = { name: resource[:name] , ensure: :present }
+    self.group = resource[:group] if resource[:group]
+    self.acl = resource[:acl] if resource[:acl]
   end
 
   def destroy
-    @property_flush = { name: name, ensure: :absent }
+    node.api('snmp').remove_community(resource[:name])
+    @property_hash = { name: resource[:name], ensure: :absent }
   end
 
-  def group=(value)
-    @property_flush[:group] = value
-  end
-
-  def acl=(value)
-    @property_flush[:acl] = value
-  end
-
-  def flush
-    new_property_hash = @property_hash.merge(@property_flush)
-    new_property_hash[:name] = name
-
-    case new_property_hash[:ensure]
-    when :absent, 'absent'
-      api.snmp_community_destroy(name: name)
-    else
-      api.snmp_community_set(new_property_hash)
-    end
-
-    @property_hash = new_property_hash
-  end
 end

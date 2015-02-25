@@ -48,8 +48,9 @@ to the device.
 ### Beginning with netdev_stdlib_eos
 
  1. Install the module on the Puppet master.
- 2. Run the puppet agent on the switch to synchronize the types and providers.
- 3. Verify the providers by running `puppet resource network_interface` using
+ 2. Install the rbeapi gem on the switch [See Ruby Client for eAPI] (rbeap)
+ 3. Run the puppet agent on the switch to synchronize the types and providers.
+ 4. Verify the providers by running `puppet resource network_interface` using
     the bash command on the EOS device.
 
 ```
@@ -109,7 +110,7 @@ This module requires two dependencies that should be checked out as Git working
 copies in the context of onging development.  These projects are:
 
  * [netdev_stdlib][netdev]
- * [puppet_x_eos_eapi][puppet_x_eos_eapi]
+ * [Ruby Client for eAPI][rbeapi]
 
 The dependencies are managed via the bundler Gemfile andthe environment needs
 to be configured to use local Git copies:
@@ -117,8 +118,8 @@ to be configured to use local Git copies:
     cd /workspace
     git clone https://github.com/puppetlabs/netdev_stdlib
     export GEM_NETDEV_STDLIB_VERSION=file:///workspace/netdev_stdlib
-    git clone https://github.com/puppetlabs/puppet_x_eos_eapi
-    export GEM_PUPPET_X_EOS_EAPI_VERSION=file:///workspace/puppet_x_eos_eapi
+    git clone https://github.com/arista-eosplus/rbeapi
+    export GEM_RBEAPI_VERSION=file:///workspace/rbeapi
 
 Then install all of the dependencies:
 
@@ -132,4 +133,4 @@ together:
     bundle exec rspec spec
 
 [netdev]: https://github.com/puppetlabs/netdev_stdlib
-[puppet_x_eos_eapi]: https://github.com/puppetlabs/puppet_x_eos_eapi
+[rbeapi]: https://gitub.com/arista-eos/rbeapi

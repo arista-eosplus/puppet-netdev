@@ -2,17 +2,18 @@
 
 require 'puppet/type'
 require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::NetDev::EosProviderMethods
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::NetDev::EosProviderMethods
-  # Mix in common provider class methods (e.g. self.prefetch)
-  extend PuppetX::NetDev::EosProviderClassMethods
+  extend PuppetX::NetDev::EosApi
+
 
   def initialize(resource = {})
     super(resource)
@@ -24,7 +25,7 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   end
 
   def self.instances
-    receivers = api.snmp_notification_receivers
+    receivers = netdev('snmp').snmp_notification_receivers
     receivers.map do |rsrc_hash|
       new(rsrc_hash.merge(name: namevar(rsrc_hash)))
     end
@@ -69,9 +70,9 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
     new_property_hash[:name] = name.split(':').first
     case new_property_hash[:ensure]
     when :present
-      api.snmp_notification_receiver_set(new_property_hash)
+      netdev('snmp').snmp_notification_receiver_set(new_property_hash)
     when :absent
-      api.snmp_notification_receiver_remove(new_property_hash)
+      netdev('snmp').snmp_notification_receiver_remove(new_property_hash)
     end
     @property_hash = new_property_hash
     @property_hash[:name] = self.class.namevar(new_property_hash)

@@ -1,21 +1,25 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/eos/provider'
+require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:radius_global).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    api = eapi.Radius
-    global_settings = api.getall
-    global_settings.map { |rsrc_hash| new(rsrc_hash) }
+    result = node.api('radius').get
+    provider_hash = { name: 'settings' }
+    provider_hash.merge!(result[:global])
+    provider_hash[:retransmit_count] = result[:global][:retransmit]
+    [new(provider_hash)]
   end
 
   def initialize(resource = {})
@@ -27,7 +31,7 @@ Puppet::Type.type(:radius_global).provide(:eos) do
   end
 
   def enable=(value)
-    fail ArgumentError, 'Radius cannot be disabled on EOS' unless value
+    not_supported 'enable'
   end
 
   def key=(value)
@@ -51,11 +55,11 @@ Puppet::Type.type(:radius_global).provide(:eos) do
   end
 
   def flush
-    api = eapi.Radius
+    api = node.api('radius')
     opts = @property_hash.merge(@property_flush)
-    api.set_global_key(opts) if @flush_key
-    api.set_timeout(opts) if @flush_timeout
-    api.set_retransmit_count(opts) if @flush_retransmit
+    api.set_global_key(value: opts[:key], key_format: opts[:key_format]) if @flush_key
+    api.set_global_timeout(value: opts[:timeout]) if @flush_timeout
+    api.set_global_retransmit(value: opts[:retransmit_count]) if @flush_retransmit
     # Update the state in the model to reflect the flushed changes
     @property_hash.merge!(@property_flush)
   end

@@ -20,8 +20,6 @@ group :development do
   gem 'guard-shell'
 end
 
-gem 'net_http_unix'
-
 group :development, :test do
   gem 'yard'
   gem 'redcarpet'
@@ -50,10 +48,10 @@ else
   gem 'puppetmodule-netdev_stdlib', '~> 0.10.0'
 end
 
-puppet_x_eos_eapi_version = ENV['GEM_PUPPET_X_EOS_EAPI_VERSION']
-if puppet_x_eos_eapi_version
-  gem 'puppet_x_eos_eapi', *location_for(puppet_x_eos_eapi_version)
+rbeapiversion = ENV['GEM_RBEAPI_VERSION']
+if rbeapiversion
+  gem 'rbeapi', *location_for(rbeapiversion)
 else
-  gem 'puppet_x_eos_eapi'
+  gem 'rbeapi', require: false
 end
 # vim:ft=ruby

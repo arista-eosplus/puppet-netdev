@@ -1,187 +1,200 @@
-# encoding: utf-8
-
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 require 'spec_helper'
 
+include FixtureHelpers
+
 describe Puppet::Type.type(:snmp_community).provider(:eos) do
-  let(:type) { Puppet::Type.type(:snmp_community) }
 
-  # Allow text cases to override resource attributes
-  let :resource_override do
-    {}
-  end
-
-  let :resource_hash do
-    {
-      name: 'public',
+  # Puppet RAL memoized methods
+  let(:resource) do
+    resource_hash = {
       ensure: :present,
-      group: 'ro',
-      acl: 'Public Community'
-    }.merge(resource_override)
+      name: 'public',
+      group: :ro,
+      acl: 'foo',
+      provider: described_class.name
+    }
+    Puppet::Type.type(:snmp_community).new(resource_hash)
   end
 
-  let(:resource) { type.new(resource_hash) }
-  let(:provider) { described_class.new(resource) }
+  let(:provider) { resource.provider }
+
+  let(:api) { double('snmp') }
+
+  def snmp
+    snmp = Fixtures[:snmp]
+    return snmp if snmp
+    fixture('snmp', dir: File.dirname(__FILE__))
+  end
 
   before :each do
-    allow(described_class.api).to receive(:snmp_communities)
-      .and_return(fixture(:api_snmp_communities))
+    allow(described_class.node).to receive(:api).with('snmp').and_return(api)
+    allow(provider.node).to receive(:api).with('snmp').and_return(api)
   end
 
-  describe 'class methods' do
+  context 'class methods' do
+
+    before { allow(api).to receive(:get).and_return(snmp) }
+
     describe '.instances' do
       subject { described_class.instances }
 
       it { is_expected.to be_an Array }
-      it { expect(subject.size).to eq(3) }
 
-      it 'each provider has ensure=present' do
-        subject.each { |p| expect(p.ensure).to eq(:present) }
+      it 'has only one entry' do
+        expect(subject.size).to eq 1
+      end
+
+      it 'has an instance for public' do
+        instance = subject.find { |p| p.name == 'public' }
+        expect(instance).to be_a described_class
+      end
+
+      context 'snmp_community { "public": }' do
+        subject { described_class.instances.find { |p| p.name == 'public' } }
+
+        include_examples 'provider resource methods',
+                         ensure: :present,
+                         name: 'public',
+                         group: :ro,
+                         acl: 'foo',
+                         exists?: true
+      end
+    end
+
+    describe '.prefetch' do
+      let :resources do
+        {
+          'public' => Puppet::Type.type(:snmp_community).new(name: 'public'),
+          'private' => Puppet::Type.type(:snmp_community).new(name: 'private'),
+        }
+      end
+
+      subject { described_class.prefetch(resources) }
+
+      it 'resource providers are absent prior to calling .prefetch' do
+        resources.values.each do |rsrc|
+          expect(rsrc.provider.group).to eq(:absent)
+          expect(rsrc.provider.acl).to eq(:absent)
+        end
+      end
+
+      it 'sets the provider instance of the managed resource' do
+        subject
+        expect(resources['public'].provider.name).to eq('public')
+        expect(resources['public'].provider.group).to eq(:ro)
+        expect(resources['public'].provider.acl).to eq('foo')
+        expect(resources['public'].provider.exists?).to be_truthy
+      end
+
+      it 'does not set the provider instance of the unmanaged resource' do
+        subject
+        expect(resources['private'].provider.name).to eq('private')
+        expect(resources['private'].provider.group).to eq(:absent)
+        expect(resources['private'].provider.acl).to eq(:absent)
+        expect(resources['private'].provider.exists?).to be_falsey
       end
     end
   end
 
-  describe '#flush' do
-    before :each do
-      allow(provider.api).to receive(:snmp_community_set)
-      allow(provider.api).to receive(:snmp_community_destroy)
+  context 'resource (instance) methods' do
+
+    describe '#exists?' do
+      subject { provider.exists? }
+
+      context 'when the resource does not exist on the system' do
+        it { is_expected.to be_falsey }
+      end
+
+      context 'when the resource exists on the system' do
+        let(:provider) do
+          allow(api).to receive(:get).and_return(snmp)
+          described_class.instances.first
+        end
+        it { is_expected.to be_truthy }
+      end
     end
 
-    context 'after create' do
-      subject do
+    describe '#create' do
+      let(:vid) { resource[:name] }
+
+      before do
+        allow(api).to receive_messages(
+          :set_community_access => true,
+          :set_community_acl => true
+        )
+        expect(api).to receive(:add_community).with(resource[:name])
+      end
+
+      it 'sets ensure to :present' do
         provider.create
-        provider.flush
-      end
-
-      it 'calls api.snmp_community_set' do
-        expected_args = {
-          name: 'public',
-          group: :ro,
-          acl: 'Public Community',
-          ensure: :present
-        }
-        expect(provider.api).to receive(:snmp_community_set)
-          .with(expected_args)
-        subject
-      end
-
-      it 'sets the ensure value to :present' do
-        subject
         expect(provider.ensure).to eq(:present)
       end
 
-      it 'sets the group to :ro' do
-        subject
-        expect(provider.group).to eq :ro
+      it 'sets group to the resource value' do
+        provider.create
+        expect(provider.group).to eq(:ro)
       end
 
-      it 'sets the acl to "Public Community"' do
-        subject
-        expect(provider.acl).to eq 'Public Community'
+      it 'sets acl to the resource value' do
+        provider.create
+        expect(provider.acl).to eq('foo')
       end
     end
 
-    context 'after destroy' do
-      subject do
+    describe '#destroy' do
+      it 'sets ensure to :absent' do
+        expect(api).to receive(:remove_community).with(resource[:name])
         provider.destroy
-        provider.flush
-      end
-
-      it 'calls api.snmp_community_set' do
-        expect(provider.api).to receive(:snmp_community_destroy)
-          .with(name: 'public')
-        subject
-      end
-
-      it 'sets the ensure value to :absent' do
-        subject
         expect(provider.ensure).to eq(:absent)
       end
     end
 
-    context 'when changing the group' do
-      let(:provider) { described_class.new(resource_hash) }
-      let :expected_args do
-        resource_hash.merge(group: 'rw', acl: 'Public Community')
-      end
-
-      it 'does not unset the acl' do
-        provider.group = 'rw'
-        expect(provider.api).to receive(:snmp_community_set)
-          .with(expected_args)
-        provider.flush
+    describe '#group=(value)' do
+      it 'updates group in the provider' do
+        expect(api).to receive(:set_community_access).with(resource[:name], 'rw')
+        provider.group = :rw
+        expect(provider.group).to eq(:rw)
       end
     end
-  end
 
-  describe '#create' do
-    subject { provider.create }
-
-    it 'sets @property_flush with ensure: present' do
-      subject
-      expect(provider.instance_variable_get(:@property_flush))
-        .to include(ensure: :present)
-    end
-
-    it 'sets @property_flush with group: :ro' do
-      subject
-      expect(provider.instance_variable_get(:@property_flush))
-        .to include(group: :ro)
-    end
-
-    it 'sets @property_flush with acl: "Public Community"' do
-      subject
-      expect(provider.instance_variable_get(:@property_flush))
-        .to include(acl: 'Public Community')
-    end
-
-    it 'sets @property_flush with name: "public"' do
-      subject
-      expect(provider.instance_variable_get(:@property_flush))
-        .to include(name: 'public')
-    end
-  end
-
-  describe '#destroy' do
-    subject { provider.destroy }
-
-    it 'sets @property_flush with ensure: absent' do
-      subject
-      expect(provider.instance_variable_get(:@property_flush))
-        .to include(ensure: :absent)
-    end
-  end
-
-  describe '#group=(value)' do
-    subject { provider.group = val }
-
-    [:ro, :rw].each do |value|
-      context "#group = #{value.inspect}" do
-        let(:val) { value }
-
-        it "sets @property_flush[:group] = #{value.inspect}" do
-          subject
-          expect(provider.instance_variable_get(:@property_flush))
-            .to include(group: value)
-        end
+    describe '#acl=(value)' do
+      it 'updates acl in the provider' do
+        expect(api).to receive(:set_community_acl).with(resource[:name], value: 'foo')
+        provider.acl = 'foo'
+        expect(provider.acl).to eq('foo')
       end
     end
+
   end
-
-  describe '#acl=(value)' do
-    subject { provider.acl = val }
-
-    %w(stest1 stest2 foo).each do |value|
-      context "#acl = #{value.inspect}" do
-        let(:val) { value }
-
-        it "sets @property_flush[:acl] = #{value.inspect}" do
-          subject
-          expect(provider.instance_variable_get(:@property_flush))
-            .to include(acl: value)
-        end
-      end
-    end
-  end
-
-  it_behaves_like 'provider exists?'
 end

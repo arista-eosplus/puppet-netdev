@@ -1,69 +1,69 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/eos/provider'
+require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:tacacs_server_group).provide(:eos) do
+
+  DEFAULT_TACACS_PORT = '49'
+
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    api = eapi.Tacacs
-    groups = api.server_groups
-    groups.map do |api_attributes|
-      servers = api_attributes[:servers].map {|hsh| server_name(hsh) }
-      new(name: api_attributes[:name], ensure: :present, servers: servers)
+    aaa = node.api('aaa').get
+    aaa[:groups].each_with_object([]) do |(name, attrs), arry|
+      next unless attrs[:type] == 'tacacs+'
+      provider_hash = { name: name, ensure: :present }
+      provider_hash[:servers] = attrs[:servers].map { |srv| server_name(srv) }
+      Puppet.debug("#{provider_hash}")
+      arry << new(provider_hash)
     end
-  end
-
-  def initialize(resource = {})
-    super(resource)
-    @property_flush = {}
   end
 
   def exists?
     @property_hash[:ensure] == :present
   end
 
+  def servers=(value)
+    servers = value.map { |srv| parse_server_name(srv) }
+    node.api('aaa').groups.set_servers(resource[:name], servers)
+    @property_hash[:servers] = value
+  end
+
   def create
-    @property_flush = resource.to_hash
+    rc = node.api('aaa').groups.create(resource[:name], 'tacacs+')
+    raise Puppet::Error, "unable to create server group #{name}" unless rc
+    @property_hash = { name: resource[:name], ensure: :present }
+    self.servers = resource[:servers] if resource[:servers]
   end
 
   def destroy
-    @property_flush = resource.to_hash
+    node.api('aaa').groups.delete(resource[:name])
+    @property_hash = { name: resource[:name], ensure: :absent }
   end
 
-  def servers=(value)
-    @property_flush[:servers] = value
-  end
-
-  def flush
-    api = eapi.Tacacs
-    desired_state = @property_hash.merge(@property_flush)
-    tacacs_servers = desired_state[:servers].map { |s| parse_server_name(s) }
-    case desired_state[:ensure]
-    when :present
-      api.update_server_group(name: name, servers: tacacs_servers)
-    when :absent
-      api.remove_server_group(name: name)
-    end
-    @property_hash = desired_state
-  end
-
-  # Construct a server name given a hostname & port
+  # Construct a server name given a name, vrf, and port
   def self.server_name(opts = {})
-    "#{opts[:hostname]}/#{opts[:port]}"
+    vrf = opts[:vrf] || ''
+    port = opts[:port]
+    "#{opts[:name]}/#{vrf}/#{port}"
   end
 
   def parse_server_name(name)
-    (hostname, port) = name.split('/')
-    hsh = { hostname: hostname }
-    hsh[:port] = port if port
+    (name, vrf, port) = name.split('/')
+    hsh = { name: name }
+    hsh[:vrf] = vrf if vrf
+    hsh[:port] = port || DEFAULT_TACACS_PORT
     hsh
   end
   private :parse_server_name
+
 end
+

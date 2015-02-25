@@ -2,114 +2,109 @@
 
 require 'puppet/type'
 require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:network_interface).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::NetDev::EosProviderMethods
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::NetDev::EosProviderMethods
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    interfaces = api.all_interfaces
-
-    interfaces.each_with_object([]) do |(name, attr_hash), ary|
-      next unless attr_hash['hardware'] == 'ethernet'
-      provider_hash = { name: name }
-      provider_hash.merge! interface_attributes(attr_hash)
-
-      ary << new(provider_hash)
+    interfaces = node.api('interfaces').getall
+    interfaces.each_with_object([]) do |(name, attrs), arry|
+      next unless attrs[:type] == 'ethernet'
+      provider_hash = { name: name, ensure: :present }
+      provider_hash[:description] = attrs[:description]
+      enable = !attrs[:shutdown]
+      provider_hash[:enable] = enable.to_s.to_sym
+      if attrs[:forced]
+        speed, duplex = attrs[:speed].scan(/(\d+[gm]?)(full|half)/).first
+        provider_hash[:duplex] =  duplex.to_sym
+        provider_hash[:speed] = self.convert_speed_to_type(speed)
+      else
+        provider_hash[:duplex] = :auto
+        provider_hash[:speed] = :auto
+      end
+      arry << new(provider_hash)
     end
   end
 
-  def self.prefetch(resources)
-    provider_hash = instances.each_with_object({}) do |provider, hsh|
-      hsh[provider.name] = provider
-    end
-
-    resources.each_pair do |name, resource|
-      resource.provider = provider_hash[name] if provider_hash[name]
-    end
-  end
-
-  def initialize(resource = {})
-    super(resource)
+  def initialize(resources)
+    super(resources)
     @property_flush = {}
+    @flush_speed = false
   end
 
   def enable=(val)
-    @property_flush[:enable] = val
+    value = val == :false
+    node.api('interfaces').set_shutdown(resource[:name], value: value)
+    @property_hash[:enable] = val
   end
 
   def description=(val)
-    @property_flush[:description] = val
+    node.api('interfaces').set_description(resource[:name], value: val)
+    @property_hash[:description] = val
+  end
+
+  def mtu=(val)
+    not_supported 'mtu'
   end
 
   def speed=(val)
+    @flush_speed = true
     @property_flush[:speed] = val
   end
 
   def duplex=(val)
+    @flush_speed = true
     @property_flush[:duplex] = val
   end
 
-  def mtu=(val)
-    @property_flush[:mtu] = val
-  end
-
-  ##
-  # flush changes as one API call because speed and duplex settings are set via
-  # one command.
-  #
-  #     configure interface ethernet 1
-  #     speed forced 1000full
   def flush
-    flush_enable_state
-    flush_speed_and_duplex(resource[:name])
-    flush_mtu
-    flush_description
-    @property_hash = resource.to_hash
+    api = node.api('interfaces')
+    speed = convert_speed_to_api(@property_flush)
+    forced = speed != 'auto'
+    api.set_speed(resource[:name], value: speed, forced: forced)
+    # Update the state in the model to reflect the flushed changes
+    @property_hash.merge!(@property_flush)
   end
 
-  ##
-  # flush_mtu manages the mtu setting and is meant to be called from the
-  # provider's flush instance method.
-  def flush_mtu
-    mtu = @property_flush[:mtu]
-    return nil unless mtu
+  def convert_speed_to_api(opts = {})
+    speed = opts[:speed] || :auto
+    duplex = opts[:duplex] || :auto
 
-    api.set_interface_mtu(resource[:name], mtu)
+    return 'auto' if speed == :auto || duplex == :auto
+
+    case speed.to_s
+    when '10m'
+      duplex == :full ? '10full' : '10half'
+    when '100m'
+      duplex == :full ? '100full' : '100half'
+    when '1g'
+      duplex == :full ? '1000full' : '1000half'
+    when '10g'
+      '10gfull' if duplex == :full
+    when '40g'
+      '40gfull' if duplex == :full
+    when '100g'
+      '100gfull' if duplex == :full
+    else
+      fail ArgumentError, 'speed is not supported'
+    end
   end
 
-  ##
-  # flush_description configures the description of the target interface and is
-  # meant to be called from the provider's flush instance method.
-  #
-  # @api private
-  def flush_description
-    description = @property_flush[:description]
-    return nil unless description
-    api.set_interface_description(resource[:name], description)
-  end
-
-  ##
-  # flush_enable_state configures the shutdown or no shutdown state of an
-  # interface and is meant to be called from the provider's flush instance
-  # method.
-  def flush_enable_state
-    value = @property_flush[:enable]
-    return nil unless value
-
-    arg = case value
-          when :true then 'no shutdown'
-          when :false then 'shutdown'
-          else
-            msg = "unknown enable value=#{value.inspect} expected true or false"
-            fail Puppet::Error, msg
-          end
-
-    api.set_interface_state(resource[:name], arg)
+  def self.convert_speed_to_type(speed)
+    case speed
+    when '10' then '10m'
+    when '100' then '100m'
+    when '1000' then '1g'
+    when '10000' then '10g'
+    else speed
+    end
   end
 end

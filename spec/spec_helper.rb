@@ -6,8 +6,8 @@ SimpleCov.start do
   add_filter '/.bundle/'
 end
 
-require 'puppet_x/net_dev/eos_api'
 require 'puppetlabs_spec_helper/puppet_spec_helper'
+require 'pry'
 
 dir = File.expand_path(File.dirname(__FILE__))
 Dir["#{dir}/support/**/*.rb"].sort.each { |f| require f }

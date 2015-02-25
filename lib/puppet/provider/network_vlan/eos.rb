@@ -2,39 +2,38 @@
 
 require 'puppet/type'
 require 'puppet_x/net_dev/eos_api'
+
 Puppet::Type.type(:network_vlan).provide(:eos) do
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::NetDev::EosProviderMethods
+  include PuppetX::NetDev::EosApi
+
   # Mix in the api as class methods
-  extend PuppetX::NetDev::EosProviderMethods
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
-    vlans = api.all_vlans
-
-    vlans.map do |id_s, attr_hash|
-      id = Integer(id_s)
-      name = attr_hash['name']
-      provider_hash = { name: id_s, vlan_name: name, id: id, ensure: :present }
-
-      is_active = attr_hash['status'] == 'active'
-      provider_hash[:shutdown] = is_active ? :false : :true
-
-      new(provider_hash)
+    result = node.api('vlans').getall
+    result.each_with_object([]) do |(vid, attrs), arry|
+      id = Integer(vid)
+      provider_hash = { name: vid, id: id, ensure: :present }
+      provider_hash[:vlan_name] = attrs[:name]
+      provider_hash[:shutdown] = (attrs[:state] == 'suspend').to_s.to_sym
+      arry << new(provider_hash)
     end
   end
 
-  def self.prefetch(resources)
-    provider_hash = instances.each_with_object({}) do |provider, hsh|
-      hsh[provider.name] = provider
-    end
+  def vlan_name=(value)
+    node.api('vlans').set_name(resource[:id], value: value)
+    @property_hash[:vlan_name] = value
+  end
 
-    resources.each_pair do |name, resource|
-      resource.provider = provider_hash[name] if provider_hash[name]
-    end
+  def shutdown=(value)
+    state = value == :true ? 'suspend' : 'active'
+    node.api('vlans').set_state(resource[:id], value: state)
+    @property_hash[:shutdown] = value
   end
 
   def exists?
@@ -42,35 +41,15 @@ Puppet::Type.type(:network_vlan).provide(:eos) do
   end
 
   def create
-    id = resource[:id]
-    api.vlan_create(id)
+    node.api('vlans').create(resource[:id])
     @property_hash = { id: id, ensure: :present }
-    # Sync the catalog with the system
     self.shutdown  = resource[:shutdown]  if resource[:shutdown]
     self.vlan_name = resource[:vlan_name] if resource[:vlan_name]
   end
 
   def destroy
-    id = resource[:id]
-    api.vlan_destroy(id)
+    node.api('vlans').delete(resource[:id])
     @property_hash = { id: id, ensure: :absent }
   end
 
-  def vlan_name=(value)
-    api.set_vlan_name(resource[:id], value)
-    @property_hash[:vlan_name] = value
-  end
-
-  def shutdown=(value)
-    case value
-    when :true
-      state = 'suspend'
-    when :false
-      state = 'active'
-    else
-      fail Puppet::Error, "unknown shutdown value #{value.inspect}"
-    end
-    api.set_vlan_state(resource[:id], state)
-    @property_hash[:shutdown] = value
-  end
 end

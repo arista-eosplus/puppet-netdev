@@ -1,0 +1,7 @@
+---
+:global:
+  :timeout: '10'
+  :retransmit: '10'
+  :key: 044B0A151C36435C0D
+  :key_format: 7
+
