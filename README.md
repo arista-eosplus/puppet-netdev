@@ -48,7 +48,7 @@ to the device.
 ### Beginning with netdev_stdlib_eos
 
  1. Install the module on the Puppet master.
- 2. Install the rbeapi gem on the switch [See Ruby Client for eAPI] (rbeap)
+ 2. Install the rbeapi gem on the switch See the [Ruby Client for eAPI][rbeapi]
  3. Run the puppet agent on the switch to synchronize the types and providers.
  4. Verify the providers by running `puppet resource network_interface` using
     the bash command on the EOS device.
@@ -133,4 +133,4 @@ together:
     bundle exec rspec spec
 
 [netdev]: https://github.com/puppetlabs/netdev_stdlib
-[rbeapi]: https://gitub.com/arista-eos/rbeapi
+[rbeapi]: https://github.com/arista-eosplus/rbeapi
