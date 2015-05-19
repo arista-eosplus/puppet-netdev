@@ -87,8 +87,7 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
         include_examples 'provider resource methods',
                          name: 'settings',
                          contact: 'network operations',
-                         location: 'data center',
-                         enable: :true
+                         location: 'data center'
       end
     end
 
@@ -118,7 +117,7 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
         expect(resources['settings'].provider.exists?).to be_truthy
         expect(resources['settings'].provider.contact).to eq 'network operations'
         expect(resources['settings'].provider.location).to eq 'data center'
-        expect(resources['settings'].provider.enable).to eq :true
+        expect(resources['settings'].provider.enable).to eq :absent
       end
 
       it 'does not set the provider instance of the unmanaged resource' do
@@ -167,19 +166,20 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
     end
 
     describe '#enable=(value)' do
-      let(:vid) { resource[:name] }
+      # enable is not_supported on EOS.  SNMP is always enabled
+      #let(:vid) { resource[:name] }
 
-      it 'updates enable with value :true' do
-        expect(api).to receive(:set_enable).with(value: true)
-        provider.enable = :true
-        expect(provider.enable).to eq(:true)
-      end
+      #it 'updates enable with value :true' do
+      #  expect(api).to receive(:set_enable).with(value: true)
+      #  provider.enable = :true
+      #  expect(provider.enable).to eq(:true)
+      #end
 
-      it 'updates enable with value :false' do
-        expect(api).to receive(:set_enable).with(value: false)
-        provider.enable = :false
-        expect(provider.enable).to eq(:false)
-      end
+      #it 'updates enable with value :false' do
+      #  expect(api).to receive(:set_enable).with(value: false)
+      #  provider.enable = :false
+      #  expect(provider.enable).to eq(:false)
+      #end
     end
   end
 end
