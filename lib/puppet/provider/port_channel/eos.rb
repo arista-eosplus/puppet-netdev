@@ -66,7 +66,7 @@ Puppet::Type.type(:port_channel).provide(:eos) do
   end
 
   def speed=(val)
-    not_supported 'spped'
+    not_supported 'speed'
   end
 
   def duplex=(val)
