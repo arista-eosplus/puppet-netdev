@@ -85,7 +85,7 @@ describe Puppet::Type.type(:radius).provider(:eos) do
 
         include_examples 'provider resource methods',
                          name: 'settings',
-                         enable: :true
+                         enable: true
       end
     end
 
