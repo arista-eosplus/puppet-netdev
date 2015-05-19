@@ -31,6 +31,8 @@
 #
 require 'spec_helper'
 
+include FixtureHelpers
+
 describe Puppet::Type.type(:radius).provider(:eos) do
 
   # Puppet RAL memoized methods
@@ -54,6 +56,7 @@ describe Puppet::Type.type(:radius).provider(:eos) do
     Fixtures[:radius] = JSON.load(File.read(file))
   end
 
+  # Stub the Api method class.
   before :each do
     allow(described_class.node).to receive(:api).with('radius').and_return(api)
     allow(provider.node).to receive(:api).with('radius').and_return(api)
@@ -93,6 +96,7 @@ describe Puppet::Type.type(:radius).provider(:eos) do
           'alternative' => Puppet::Type.type(:radius).new(name: 'alternative')
         }
       end
+
       subject { described_class.prefetch(resources) }
 
       it 'resource providers are absent prior to calling .prefetch' do

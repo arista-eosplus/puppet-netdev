@@ -16,10 +16,10 @@ Puppet::Type.type(:radius).provide(:eos) do
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
 
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
     result = node.api('radius').get
