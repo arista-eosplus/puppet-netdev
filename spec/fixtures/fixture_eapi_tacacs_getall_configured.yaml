@@ -1,6 +1,6 @@
---- 
-  - !ruby/sym name: settings
-    !ruby/sym enable: true
-    !ruby/sym timeout: 7
-    !ruby/sym key_format: 7
-    !ruby/sym key: "070E234F1F5B4A"
+---
+:global:
+  :timeout: 7
+  :key_format: 7
+  :key: "070E234F1F5B4A"
+:servers: ['1.2.3.4','4.3.2.1']
