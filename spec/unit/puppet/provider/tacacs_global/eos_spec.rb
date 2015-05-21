@@ -106,7 +106,7 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
     describe '#flush' do
       before :each do
         allow(api).to receive(:set_global_key).and_return(true)
-        allow(api).to receive(:set_timeout).and_return(true)
+        allow(api).to receive(:set_global_timeout).and_return(true)
       end
 
       context 'after updating the key' do
