@@ -93,7 +93,6 @@ describe Puppet::Type.type(:tacacs_server_group).provider(:eos) do
       context 'after create' do
         subject do
           provider.create
-          #provider.flush
         end
 
         it 'calls #create' do
@@ -111,7 +110,6 @@ describe Puppet::Type.type(:tacacs_server_group).provider(:eos) do
 
         subject do
           provider.destroy
-          #provider.flush
         end
 
         it 'calls #delete' do
@@ -126,7 +124,6 @@ describe Puppet::Type.type(:tacacs_server_group).provider(:eos) do
         subject do
           provider.create
           provider.servers=[]
-          #provider.flush
         end
 
         it 'calls #set_servers' do
