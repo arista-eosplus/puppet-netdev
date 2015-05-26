@@ -47,11 +47,11 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
 
   def create
     node.api('logging').add_host(resource[:name])
-    @provider_hash = { name: resource[:name], ensure: :present }
+    @property_hash = { name: resource[:name], ensure: :present }
   end
 
   def destroy
     node.api('logging').remove_host(resource[:name])
-    @provider_hash = { name: resource[:name], ensure: :absent }
+    @property_hash = { name: resource[:name], ensure: :absent }
   end
 end
