@@ -52,8 +52,7 @@ describe Puppet::Type.type(:radius).provider(:eos) do
   def radius
     radius = Fixtures[:radius]
     return radius if radius
-    file = File.join(File.dirname(__FILE__), 'fixture_api_radius.json')
-    Fixtures[:radius] = JSON.load(File.read(file))
+    fixture('eapi_radius_servers')
   end
 
   # Stub the Api method class.

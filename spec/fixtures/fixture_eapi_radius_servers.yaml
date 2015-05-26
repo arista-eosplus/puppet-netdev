@@ -1,9 +1,9 @@
 ---
 :global:
-  :timeout: 5
-  :retransmit: 3
-  :key_format: 0
-  :key: 
+  :timeout: 10
+  :retransmit: 10
+  :key_format: 7
+  :key: 044B0A151C36435C0D
 :servers:
   - !ruby/sym auth_port: 1812
     !ruby/sym acct_port: 1813
