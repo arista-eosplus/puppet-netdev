@@ -54,7 +54,7 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
   def tacacs
     tacacs = Fixtures[:tacacs]
     return tacacs if tacacs
-    fixture('eapi_tacacs_getall_configured')
+    fixture('eapi_tacacs_servers')
   end
 
   before :each do

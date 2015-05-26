@@ -1,6 +1,0 @@
----
-:global:
-  :timeout: 7
-  :key_format: 7
-  :key: "070E234F1F5B4A"
-:servers: ['1.2.3.4','4.3.2.1']

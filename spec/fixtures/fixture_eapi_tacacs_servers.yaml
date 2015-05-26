@@ -1,8 +1,8 @@
 ---
 :global:
-  :timeout: 700
-  :key: 1249524737595F500C7A027D116103
-  :key_format: '7'
+  :timeout: 7
+  :key: 070E234F1F5B4A
+  :key_format: 7
 :servers:
   - :port: 4949
     :vrf: 
