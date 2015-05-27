@@ -1,0 +1,79 @@
+---
+:location: 'data center'
+:contact: 'network operations'
+:chassis_id: '1234567890'
+:source_interface: 'Loopback0'
+:communities:
+  :public:
+    :access: ro
+    :acl: foo
+:notifications:
+- :name: bgp arista-backward-transition
+  :state: default
+- :name: bgp arista-established
+  :state: default
+- :name: bgp backward-transition
+  :state: default
+- :name: bgp established
+  :state: default
+- :name: entity
+  :state: default
+- :name: entity arista-ent-sensor-alarm
+  :state: default
+- :name: entity ent-config-change
+  :state: default
+- :name: entity ent-state-oper-disabled
+  :state: default
+- :name: entity ent-state-oper-enabled
+  :state: default
+- :name: lldp
+  :state: default
+- :name: lldp rem-tables-change
+  :state: default
+- :name: msdp
+  :state: default
+- :name: msdp backward-transition
+  :state: default
+- :name: msdp established
+  :state: default
+- :name: ospf
+  :state: default
+- :name: ospf if-auth-failure
+  :state: default
+- :name: ospf if-config-error
+  :state: default
+- :name: ospf if-state-change
+  :state: default
+- :name: ospf nbr-state-change
+  :state: default
+- :name: pim
+  :state: default
+- :name: pim neighbor-loss
+  :state: default
+- :name: snmp
+  :state: default
+- :name: snmp authentication
+  :state: default
+- :name: snmp link-down
+  :state: default
+- :name: snmp link-up
+  :state: default
+- :name: snmpConfigManEvent
+  :state: default
+- :name: snmpConfigManEvent arista-config-man-event
+  :state: default
+- :name: switchover
+  :state: default
+- :name: switchover arista-redundancy-switch-over-notif
+  :state: default
+- :name: test
+  :state: default
+- :name: test arista-test-notification
+  :state: default
+- :name: vrrp
+  :state: default
+- :name: vrrp trap-new-master
+  :state: default
+- :name: all
+  :state: default
+
