@@ -54,7 +54,7 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
   def snmp
     snmp = Fixtures[:snmp]
     return snmp if snmp
-    fixture('snmp', dir: File.dirname(__FILE__))
+    fixture('eapi_snmp')
   end
 
   # Stub the Api method class to obtain all vlans.
