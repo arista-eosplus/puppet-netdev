@@ -52,7 +52,7 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
   def snmp
     snmp = Fixtures[:snmp]
     return snmp if snmp
-    fixture('snmp', dir: File.dirname(__FILE__))
+    fixture('eapi_snmp')
   end
 
   before :each do
@@ -69,8 +69,8 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
 
       it { is_expected.to be_an Array }
 
-      it 'has only one entry' do
-        expect(subject.size).to eq 1
+      it 'has at least 1 entry' do
+        expect(subject.size).to be >= 1
       end
 
       it 'has an instance for all' do
