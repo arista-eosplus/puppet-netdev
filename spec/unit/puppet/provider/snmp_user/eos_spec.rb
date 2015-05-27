@@ -2,6 +2,8 @@
 
 require 'spec_helper'
 
+include FixtureHelpers
+
 describe Puppet::Type.type(:snmp_user).provider(:eos) do
   let(:type) { Puppet::Type.type(:snmp_user) }
 
@@ -22,12 +24,23 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   let(:resource) { type.new(resource_hash) }
   let(:provider) { described_class.new(resource) }
 
-  before :each do
-    allow(described_class.api).to receive(:snmp_users)
-      .and_return(fixture(:api_snmp_users))
+  let (:api) { double('snmp') }
+
+  def snmp
+    snmp = Fixtures[:snmp]
+    return snmp if snmp
+    fixture('api_snmp_users')
   end
 
-  describe 'class methods' do
+  before :each do
+    allow(described_class.node).to receive(:api).with('snmp', {:path=>"rbeapi/netdev", :namespace=>"Rbeapi::Netdev"}).and_return(api)
+    allow(provider.node).to receive(:api).with('snmp', {:path=>"rbeapi/netdev", :namespace=>"Rbeapi::Netdev"}).and_return(api)
+  end
+
+  context 'class methods' do
+
+    before { allow(api).to receive(:snmp_users).and_return(snmp) }
+
     describe '.instances' do
       subject { described_class.instances }
 
@@ -40,6 +53,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   end
 
   describe '#flush' do
+
     let(:provider) do
       provider = described_class.new(resource_hash)
       provider.resource = resource
@@ -47,7 +61,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
     end
 
     before :each do
-      allow(provider.api).to receive(:snmp_user_set)
+      allow(api).to receive(:snmp_user_set)
         .and_return(password: 'foobar')
     end
 
@@ -58,7 +72,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
       end
 
       it 'calls snmp_user_set' do
-        expect(provider.api).to receive(:snmp_user_set)
+        expect(api).to receive(:snmp_user_set)
           .and_return(password: 'foobar')
         subject
       end
@@ -69,7 +83,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
         end
 
         it 'splits the name on colon' do
-          expect(provider.api).to receive(:snmp_user_set)
+          expect(api).to receive(:snmp_user_set)
             .with(include(name: 'jeff', version: :v3))
             .and_return(password: 'foobar')
           subject
@@ -89,7 +103,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
 
       context 'when the resource name matches the title' do
         it 'calls snmp_user_destroy' do
-          expect(provider.api).to receive(:snmp_user_destroy)
+          expect(api).to receive(:snmp_user_destroy)
             .with(include(expected)).and_return({})
           subject
         end
@@ -101,7 +115,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
         end
 
         it 'splits the name on colon' do
-          expect(provider.api).to receive(:snmp_user_destroy)
+          expect(api).to receive(:snmp_user_destroy)
             .with(include(expected))
             .and_return({})
           subject
@@ -139,6 +153,9 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   it_behaves_like 'provider exists?'
 
   describe '.prefetch(resources)' do
+
+    before { allow(api).to receive(:snmp_users).and_return(snmp) }
+
     let(:matching_resource) do
       {
         name: 'jeff',
