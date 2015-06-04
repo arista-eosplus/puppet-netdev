@@ -69,8 +69,8 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
 
       it { is_expected.to be_an Array }
 
-      it 'has at least 1 entry' do
-        expect(subject.size).to be >= 1
+      it 'has 34 entries' do
+        expect(subject.size).to eq(34)
       end
 
       it 'has an instance for all' do
