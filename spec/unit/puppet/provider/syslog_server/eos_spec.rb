@@ -49,10 +49,12 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
   def logging
     logging = Fixtures[:logging]
     return logging if logging
-    file = File.join(File.dirname(__FILE__), 'fixture_api_logging.json')
-    Fixtures[:logging] = JSON.load(File.read(file))
+    #file = File.join(File.dirname(__FILE__), 'fixture_api_logging.json')
+    #Fixtures[:logging] = JSON.load(File.read(file))
+    fixture('api_logging')
   end
 
+  # Stub the Api method class.
   before :each do
     allow(described_class.node).to receive(:api).with('logging').and_return(api)
     allow(provider.node).to receive(:api).with('logging').and_return(api)
@@ -80,8 +82,7 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
         subject { described_class.instances.find { |p| p.name == '1.2.3.4' } }
 
         include_examples 'provider resource methods',
-                         name: '1.2.3.4',
-                         enable: :true
+                         name: '1.2.3.4'
       end
     end
 
@@ -92,26 +93,25 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
           '5.6.7.8' => Puppet::Type.type(:syslog_server) .new(name: '5.6.7.8')
         }
       end
+
       subject { described_class.prefetch(resources) }
 
-      it 'resource providers are absent prior to calling .prefetch' do
-        resources.values.each do |rsrc|
-          expect(rsrc.provider.enable).to eq(:absent)
-        end
-      end
+      #it 'resource providers are absent prior to calling .prefetch' do
+      #  resources.values.each do |rsrc|
+      #    expect(rsrc.provider.enable).to eq(:absent)
+      #  end
+      #end
 
       it 'sets the provider instance of the managed resource' do
         subject
         expect(resources['1.2.3.4'].provider.name).to eq('1.2.3.4')
         expect(resources['1.2.3.4'].provider.exists?).to be_truthy
-        expect(resources['1.2.3.4'].provider.enable).to be_truthy
       end
 
       it 'does not set the provider instance of the unmanaged resource' do
         subject
         expect(resources['5.6.7.8'].provider.name).to eq('5.6.7.8')
         expect(resources['5.6.7.8'].provider.exists?).to be_falsey
-        expect(resources['5.6.7.8'].provider.enable).to eq(:absent)
       end
     end
   end
@@ -144,7 +144,7 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
 
     describe '#destroy' do
       it 'sets ensure to :absent' do
-        expect(api).to receive(:delete).with(resource[:name])
+        expect(api).to receive(:remove_host).with(resource[:name])
         provider.destroy
         expect(provider.ensure).to eq(:absent)
       end
