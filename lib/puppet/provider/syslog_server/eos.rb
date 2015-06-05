@@ -1,7 +1,14 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/net_dev/eos_api'
+
+begin
+  require "puppet_x/net_dev/eos_api"
+rescue LoadError => detail
+  require 'pathname' # JJM WORK_AROUND #14073
+  module_base = Pathname.new(__FILE__).dirname
+  require module_base + "../../../" + "puppet_x/net_dev/eos_api"
+end
 
 Puppet::Type.type(:syslog_server).provide(:eos) do
 
@@ -40,11 +47,11 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
 
   def create
     node.api('logging').add_host(resource[:name])
-    @provider_hash = { name: resource[:name], ensure: :present }
+    @property_hash = { name: resource[:name], ensure: :present }
   end
 
   def destroy
     node.api('logging').remove_host(resource[:name])
-    @provider_hash = { name: resource[:name], ensure: :absent }
+    @property_hash = { name: resource[:name], ensure: :absent }
   end
 end

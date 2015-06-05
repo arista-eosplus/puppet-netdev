@@ -55,7 +55,7 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
   def radius
     radius = Fixtures[:radius]
     return radius if radius
-    fixture('radius', dir: File.dirname(__FILE__))
+    fixture('eapi_radius_servers')
   end
 
   before :each do
@@ -88,8 +88,8 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
                          name: 'settings',
                          key: '044B0A151C36435C0D',
                          key_format: 7,
-                         timeout: '10',
-                         retransmit_count: '10'
+                         timeout: 10,
+                         retransmit_count: 10
       end
     end
 
@@ -116,8 +116,8 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
         subject
         expect(resources['settings'].provider.key).to eq('044B0A151C36435C0D')
         expect(resources['settings'].provider.key_format).to eq(7)
-        expect(resources['settings'].provider.timeout).to eq('10')
-        expect(resources['settings'].provider.retransmit_count).to eq('10')
+        expect(resources['settings'].provider.timeout).to eq(10)
+        expect(resources['settings'].provider.retransmit_count).to eq(10)
       end
 
       it 'does not set the provider instance of the unmanaged resource' do

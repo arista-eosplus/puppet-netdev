@@ -1,7 +1,14 @@
 # encoding: utf-8
 
 require 'puppet/type'
-require 'puppet_x/eos/provider'
+
+begin
+  require "puppet_x/net_dev/eos_api"
+rescue LoadError => detail
+  require 'pathname' # JJM WORK_AROUND #14073
+  module_base = Pathname.new(__FILE__).dirname
+  require module_base + "../../../" + "puppet_x/net_dev/eos_api"
+end
 
 Puppet::Type.type(:tacacs).provide(:eos) do
 
@@ -9,10 +16,10 @@ Puppet::Type.type(:tacacs).provide(:eos) do
   mk_resource_methods
 
   # Mix in the api as instance methods
-  include PuppetX::Eos::EapiProviderMixin
+  include PuppetX::NetDev::EosApi
 
   # Mix in the api as class methods
-  extend PuppetX::Eos::EapiProviderMixin
+  extend PuppetX::NetDev::EosApi
 
   def self.instances
     result = node.api('tacacs').get

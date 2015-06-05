@@ -50,7 +50,7 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
   def ntp
     ntp = Fixtures[:ntp]
     return ntp if ntp
-    fixture('ntp', dir: File.dirname(__FILE__))
+    fixture('ntp')
   end
 
   before :each do
