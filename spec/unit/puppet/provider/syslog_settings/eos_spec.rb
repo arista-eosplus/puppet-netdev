@@ -31,6 +31,8 @@
 #
 require 'spec_helper'
 
+include FixtureHelpers
+
 describe Puppet::Type.type(:syslog_settings).provider(:eos) do
 
   # Puppet RAL memoized methods
@@ -50,8 +52,10 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
   def logging
     logging = Fixtures[:logging]
     return logging if logging
-    file = File.join(File.dirname(__FILE__), 'fixture_api_logging.json')
-    Fixtures[:logging] = JSON.load(File.read(file))
+    #file = File.join(File.dirname(__FILE__), 'fixture_api_logging.json')
+    #Fixtures[:logging] = JSON.load(File.read(file))
+    #fixture('api_logging', dir: File.dirname(__FILE__))
+    fixture('api_logging')
   end
 
   before :each do

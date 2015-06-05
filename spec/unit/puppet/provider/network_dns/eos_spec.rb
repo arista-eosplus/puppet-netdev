@@ -54,7 +54,7 @@ describe Puppet::Type.type(:network_dns).provider(:eos) do
   def dns
     dns = Fixtures[:dns]
     return dns if dns
-    fixture('dns', dir: File.dirname(__FILE__))
+    fixture('dns')
   end
 
   # Stub the Api method class to obtain all vlans.

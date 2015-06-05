@@ -50,8 +50,7 @@ describe Puppet::Type.type(:tacacs).provider(:eos) do
   def tacacs
     tacacs = Fixtures[:tacacs]
     return tacacs if tacacs
-    file = File.join(File.dirname(__FILE__), 'fixture_api_tacacs.json')
-    Fixtures[:tacacs] = JSON.load(File.read(file))
+    fixture('eapi_tacacs_servers')
   end
 
   before :each do
@@ -81,8 +80,7 @@ describe Puppet::Type.type(:tacacs).provider(:eos) do
         subject { described_class.instances.find { |p| p.name == 'settings' } }
 
         include_examples 'provider resource methods',
-                         name: 'settings',
-                         enable: :true
+                         name: 'settings'
       end
     end
 
