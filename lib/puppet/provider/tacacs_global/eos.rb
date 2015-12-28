@@ -11,6 +11,8 @@ rescue LoadError => detail
 end
 
 Puppet::Type.type(:tacacs_global).provide(:eos) do
+  confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
+  confine feature: :rbeapi
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods

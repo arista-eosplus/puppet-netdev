@@ -11,6 +11,8 @@ rescue LoadError => detail
 end
 
 Puppet::Type.type(:tacacs_server_group).provide(:eos) do
+  confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
+  confine feature: :rbeapi
 
   DEFAULT_TACACS_PORT = '49'
 
