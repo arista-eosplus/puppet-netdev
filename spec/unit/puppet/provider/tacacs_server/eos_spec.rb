@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:tacacs_server).provider(:eos) do
-
   let(:type) { Puppet::Type.type(:tacacs_server) }
 
   # Allow text cases to override resource attributes
@@ -76,7 +75,6 @@ describe Puppet::Type.type(:tacacs_server).provider(:eos) do
     before { allow(api).to receive(:get).and_return(tacacs) }
 
     describe '.instances' do
-
       subject { described_class.instances }
 
       it { is_expected.to be_an Array }
@@ -84,7 +82,7 @@ describe Puppet::Type.type(:tacacs_server).provider(:eos) do
         expect(subject.size).to eq(4)
       end
       it 'sets the name parameter as <hostname>/<port>' do
-        subject.each { |i| expect(i.name).to match /^.*?\/\d+$/ }
+        subject.each { |i| expect(i.name).to match %r{^.*?\/\d+$} }
       end
       it 'one instance, 1.2.3.4/4949 has single_connection == :true' do
         instance = subject.find { |i| i.single_connection == :true }
@@ -96,12 +94,11 @@ describe Puppet::Type.type(:tacacs_server).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#flush' do
-    before :each do
-      allow(api).to receive(:update_server).and_return(true)
-      allow(api).to receive(:remove_server).and_return(true)
-    end
+      before :each do
+        allow(api).to receive(:update_server).and_return(true)
+        allow(api).to receive(:remove_server).and_return(true)
+      end
 
       context 'after create' do
         subject do

@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:radius_server).provider(:eos) do
-
   let(:type) { Puppet::Type.type(:radius_server) }
 
   # Allow text cases to override resource attributes
@@ -59,7 +58,7 @@ describe Puppet::Type.type(:radius_server).provider(:eos) do
   let(:resource) { type.new(resource_hash) }
   let(:provider) { described_class.new(resource) }
 
-    let(:api) { double('radius') }
+  let(:api) { double('radius') }
 
   def radius
     radius = Fixtures[:radius]
@@ -78,7 +77,6 @@ describe Puppet::Type.type(:radius_server).provider(:eos) do
     before { allow(api).to receive(:get).and_return(radius) }
 
     describe '.instances' do
-
       subject { described_class.instances }
 
       it { is_expected.to be_an Array }
@@ -90,7 +88,6 @@ describe Puppet::Type.type(:radius_server).provider(:eos) do
   end
 
   context 'instance methods' do
-
     describe '#flush' do
       before :each do
         allow(api).to receive(:update_server).and_return(true)

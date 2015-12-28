@@ -60,7 +60,6 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:get).and_return(ntp) }
 
     describe '.instances' do
@@ -92,7 +91,8 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
       let(:resources) do
         {
           'settings' => Puppet::Type.type(:ntp_config).new(name: 'settings'),
-          'alternative' => Puppet::Type.type(:ntp_config).new(name: 'alternative')
+          'alternative' => Puppet::Type.type(:ntp_config).new(name:
+                                                              'alternative')
         }
       end
 
@@ -121,7 +121,6 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#exists?' do
       subject { provider.exists? }
 

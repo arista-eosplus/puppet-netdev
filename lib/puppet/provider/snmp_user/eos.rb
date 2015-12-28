@@ -3,11 +3,11 @@
 require 'puppet/type'
 
 begin
-  require "puppet_x/net_dev/eos_api"
+  require 'puppet_x/net_dev/eos_api'
 rescue LoadError => detail
   require 'pathname' # JJM WORK_AROUND #14073
   module_base = Pathname.new(__FILE__).dirname
-  require module_base + "../../../" + "puppet_x/net_dev/eos_api"
+  require module_base + '../../../' + 'puppet_x/net_dev/eos_api'
 end
 
 Puppet::Type.type(:snmp_user).provide(:eos) do
@@ -22,7 +22,6 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
 
   # Mix in the api as class methods
   extend PuppetX::NetDev::EosApi
-
 
   def self.instances
     users = netdev('snmp').snmp_users

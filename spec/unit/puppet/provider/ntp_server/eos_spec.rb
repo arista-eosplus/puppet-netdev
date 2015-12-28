@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:ntp_server).provider(:eos) do
-
   let :resource do
     resource_hash = {
       name: '1.2.3.4',
@@ -59,7 +58,6 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:get).and_return(ntp) }
 
     describe '.instances' do
@@ -120,7 +118,6 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#exists?' do
       subject { provider.exists? }
 

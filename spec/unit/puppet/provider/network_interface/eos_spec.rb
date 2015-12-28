@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:network_interface).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -65,7 +64,6 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:getall).and_return(interfaces) }
 
     describe '.instances' do
@@ -77,7 +75,7 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
         expect(subject.size).to eq(1)
       end
 
-      it "has an instance for interface Ethernet1" do
+      it 'has an instance for interface Ethernet1' do
         instance = subject.find { |p| p.name == 'Ethernet1' }
         expect(instance).to be_a described_class
       end
@@ -92,7 +90,6 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
                          speed: '100g',
                          duplex: :full
       end
-
     end
 
     describe '.prefetch' do
@@ -134,10 +131,10 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#description=(value)' do
       it 'updates description in the provider' do
-        expect(api).to receive(:set_description).with(resource[:name], value: 'foo')
+        expect(api).to receive(:set_description).with(resource[:name],
+                                                      value: 'foo')
         provider.description = 'foo'
         expect(provider.description).to eq('foo')
       end
@@ -146,7 +143,9 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
     describe '#speed=(value)' do
       let(:name) { 'Ethernet1' }
       it 'updates speed in the provider' do
-        expect(api).to receive(:set_speed).with(name, value: 'auto', forced: false)
+        expect(api).to receive(:set_speed).with(name,
+                                                value: 'auto',
+                                                forced: false)
         provider.speed = :auto
         provider.flush
         expect(provider.speed).to eq(:auto)
@@ -156,7 +155,9 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
     describe '#duplex=(value)' do
       let(:name) { 'Ethernet1' }
       it 'updates duplex in the provider' do
-        expect(api).to receive(:set_speed).with(name, value: 'auto', forced: false)
+        expect(api).to receive(:set_speed).with(name,
+                                                value: 'auto',
+                                                forced: false)
         provider.duplex = :auto
         provider.flush
         expect(provider.duplex).to eq(:auto)
@@ -166,7 +167,7 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
     describe '#enable=(value)' do
       let(:name) { 'Ethernet1' }
       [:true, :false].each do |val|
-        it "updates enable in the provider" do
+        it 'updates enable in the provider' do
           value = val == :false
           expect(api).to receive(:set_shutdown).with(name, value: value)
           provider.enable = val

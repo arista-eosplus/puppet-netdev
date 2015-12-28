@@ -35,7 +35,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:tacacs_server_group).provider(:eos) do
-
   let(:type) { Puppet::Type.type(:tacacs_server_group) }
 
   # Allow text cases to override resource attributes
@@ -73,20 +72,18 @@ describe Puppet::Type.type(:tacacs_server_group).provider(:eos) do
     before { allow(api).to receive(:get).and_return(aaa) }
 
     describe '.instances' do
-
       subject { described_class.instances }
-
       it { is_expected.to be_an Array }
       include_examples 'attribute', size: 3
     end
   end
 
   context 'resource (instance) methods' do
-
     describe '#flush' do
       before :each do
         allow(api).to receive_message_chain(:groups, :create).and_return(true)
-        allow(api).to receive_message_chain(:groups, :set_servers).and_return(true)
+        allow(api).to receive_message_chain(:groups,
+                                            :set_servers).and_return(true)
         allow(api).to receive_message_chain(:groups, :delete).and_return(true)
       end
 
@@ -123,7 +120,7 @@ describe Puppet::Type.type(:tacacs_server_group).provider(:eos) do
       context 'after updating servers' do
         subject do
           provider.create
-          provider.servers=[]
+          provider.servers = []
         end
 
         it 'calls #set_servers' do

@@ -3,11 +3,11 @@
 require 'puppet/type'
 
 begin
-  require "puppet_x/net_dev/eos_api"
+  require 'puppet_x/net_dev/eos_api'
 rescue LoadError => detail
   require 'pathname' # JJM WORK_AROUND #14073
   module_base = Pathname.new(__FILE__).dirname
-  require module_base + "../../../" + "puppet_x/net_dev/eos_api"
+  require module_base + '../../../' + 'puppet_x/net_dev/eos_api'
 end
 
 Puppet::Type.type(:ntp_server).provide(:eos) do
