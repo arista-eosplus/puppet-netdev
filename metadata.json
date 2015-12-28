@@ -1,6 +1,6 @@
 {
   "name": "aristanetworks-netdev_stdlib_eos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Arista Networks, EOS+",
   "summary": "NetDev Providers for Arista EOS",
   "license": "BSD-3-Clause",
