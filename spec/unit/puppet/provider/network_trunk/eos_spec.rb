@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:network_trunk).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -67,7 +66,6 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:getall).and_return(switchports) }
 
     describe '.instances' do
@@ -93,7 +91,6 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
                          mode: :trunk,
                          tagged_vlans: [1, 10, 100, 1000],
                          untagged_vlan: 1
-
       end
     end
 
@@ -123,7 +120,8 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
         expect(resources['Ethernet1'].provider.exists?).to be_truthy
         expect(resources['Ethernet1'].provider.mode).to eq(:trunk)
         expect(resources['Ethernet1'].provider.untagged_vlan).to eq(1)
-        expect(resources['Ethernet1'].provider.tagged_vlans).to eq([1, 10, 100, 1000])
+        expect(resources['Ethernet1'].provider.tagged_vlans).to eq([1, 10, 100,
+                                                                    1000])
       end
 
       it 'does not set the provider instance of the unmanaged resource' do
@@ -138,7 +136,6 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#exists?' do
       subject { provider.exists? }
 
@@ -161,9 +158,9 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
       before do
         expect(api).to receive(:create).with(name)
         allow(api).to receive_messages(
-          :set_mode => true,
-          :set_access_vlan => true,
-          :set_trunk_allowed_vlans => true
+          set_mode: true,
+          set_access_vlan: true,
+          set_trunk_allowed_vlans: true
         )
       end
 
@@ -212,7 +209,8 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
       let(:vlans) { %w(1 10 100 1000) }
 
       it 'updates tagged_vlans in the provider' do
-        expect(api).to receive(:set_trunk_allowed_vlans).with(resource[:name], value: vlans)
+        expect(api).to receive(:set_trunk_allowed_vlans).with(resource[:name],
+                                                              value: vlans)
         provider.tagged_vlans = vlans
         expect(provider.tagged_vlans).to eq(vlans)
       end
@@ -220,7 +218,8 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
 
     describe '#untagged_vlan=(val)' do
       it 'updates untagged_vlan in the provider' do
-        expect(api).to receive(:set_access_vlan).with(resource[:name], value: 1000)
+        expect(api).to receive(:set_access_vlan).with(resource[:name],
+                                                      value: 1000)
         provider.untagged_vlan = 1000
         expect(provider.untagged_vlan).to eq(1000)
       end

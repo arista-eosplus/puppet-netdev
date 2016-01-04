@@ -56,16 +56,16 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
   let(:api) { double('snmp') }
 
   before :each do
-    allow(described_class.node).to receive(:api).with('snmp', {:path=>"rbeapi/netdev", :namespace=>"Rbeapi::Netdev"}).and_return(api)
-    allow(provider.node).to receive(:api).with('snmp', {:path=>"rbeapi/netdev", :namespace=>"Rbeapi::Netdev"}).and_return(api)
+    allow(described_class.node).to receive(:api).with('snmp',
+                                                      { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
+    allow(provider.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev',
+                                                         namespace: 'Rbeapi::Netdev' }).and_return(api)
   end
 
   it_behaves_like 'provider exists?'
 
   context 'class methods' do
-
     describe '.instances' do
-
       subject { described_class.instances }
 
       context 'when there are no duplicate hosts' do
@@ -73,7 +73,6 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
           allow(api).to receive(:snmp_notification_receivers)
             .and_return(fixture(:api_snmp_notification_receivers))
         end
-
 
         it_behaves_like 'provider instances', size: 4
       end

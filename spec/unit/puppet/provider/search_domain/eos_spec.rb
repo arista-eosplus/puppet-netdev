@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:search_domain).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -61,7 +60,6 @@ describe Puppet::Type.type(:search_domain).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:get).and_return(dns) }
 
     describe '.instances' do
@@ -89,8 +87,10 @@ describe Puppet::Type.type(:search_domain).provider(:eos) do
     describe '.prefetch' do
       let :resources do
         {
-          'arista.net' => Puppet::Type.type(:search_domain).new(name: 'arista.net'),
-          'arista.com' => Puppet::Type.type(:search_domain).new(name: 'arista.com')
+          'arista.net' => Puppet::Type.type(:search_domain).new(name:
+                                                                'arista.net'),
+          'arista.com' => Puppet::Type.type(:search_domain).new(name:
+                                                                'arista.com')
         }
       end
 
@@ -111,7 +111,6 @@ describe Puppet::Type.type(:search_domain).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#exists?' do
       subject { provider.exists? }
 

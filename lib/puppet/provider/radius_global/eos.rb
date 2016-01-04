@@ -3,14 +3,16 @@
 require 'puppet/type'
 
 begin
-  require "puppet_x/net_dev/eos_api"
+  require 'puppet_x/net_dev/eos_api'
 rescue LoadError => detail
   require 'pathname' # JJM WORK_AROUND #14073
   module_base = Pathname.new(__FILE__).dirname
-  require module_base + "../../../" + "puppet_x/net_dev/eos_api"
+  require module_base + '../../../' + 'puppet_x/net_dev/eos_api'
 end
 
 Puppet::Type.type(:radius_global).provide(:eos) do
+  confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
+  confine feature: :rbeapi
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
@@ -64,7 +66,8 @@ Puppet::Type.type(:radius_global).provide(:eos) do
   def flush
     api = node.api('radius')
     opts = @property_hash.merge(@property_flush)
-    api.set_global_key(value: opts[:key], key_format: opts[:key_format]) if @flush_key
+    api.set_global_key(value: opts[:key],
+                       key_format: opts[:key_format]) if @flush_key
     api.set_global_timeout(value: opts[:timeout]) if @flush_timeout
     api.set_global_retransmit(value: opts[:retransmit_count]) if @flush_retransmit
     # Update the state in the model to reflect the flushed changes

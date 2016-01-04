@@ -3,14 +3,16 @@
 require 'puppet/type'
 
 begin
-  require "puppet_x/net_dev/eos_api"
+  require 'puppet_x/net_dev/eos_api'
 rescue LoadError => detail
   require 'pathname' # JJM WORK_AROUND #14073
   module_base = Pathname.new(__FILE__).dirname
-  require module_base + "../../../" + "puppet_x/net_dev/eos_api"
+  require module_base + '../../../' + 'puppet_x/net_dev/eos_api'
 end
 
 Puppet::Type.type(:radius_server).provide(:eos) do
+  confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
+  confine feature: :rbeapi
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
@@ -101,7 +103,7 @@ Puppet::Type.type(:radius_server).provide(:eos) do
   private :validate_identity
 
   def self.namevar(opts)
-    hostname  = opts[:hostname] or fail ArgumentError, 'hostname required'
+    hostname  = opts[:hostname] || fail ArgumentError, 'hostname required'
     auth_port = opts[:auth_port] || 1812
     acct_port = opts[:acct_port] || 1813
     "#{hostname}/#{auth_port}/#{acct_port}"

@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:tacacs_global).provider(:eos) do
-
   let(:resource) do
     resource_hash = {
       name: 'settings',
@@ -66,7 +65,6 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
     before { allow(api).to receive(:get).and_return(tacacs) }
 
     describe '.instances' do
-
       subject { described_class.instances }
 
       it { is_expected.to be_an Array }
@@ -93,7 +91,6 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     #describe '#key=(value)' do
     #  it 'updates the global key' do
     #    expect(api).to receive(:set_global_key).with(key_format: 0, value: '070E234F1F5B4A')
@@ -102,7 +99,6 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
     #  end
     #end
 
-
     describe '#flush' do
       before :each do
         allow(api).to receive(:set_global_key).and_return(true)
@@ -110,7 +106,6 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
       end
 
       context 'after updating the key' do
-
         subject do
           provider.key = 'updatedkey'
           provider.key_format = 5

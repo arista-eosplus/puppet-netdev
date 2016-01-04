@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:port_channel).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -65,7 +64,6 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:getall).and_return(portchannels) }
 
     describe '.instances' do
@@ -77,7 +75,7 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
         expect(subject.size).to eq 1
       end
 
-      it "has an instance for Port-Channel1" do
+      it 'has an instance for Port-Channel1' do
         instance = subject.find { |p| p.name == 'Port-Channel1' }
         expect(instance).to be_a described_class
       end
@@ -135,7 +133,6 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#exists?' do
       subject { provider.exists? }
 
@@ -158,9 +155,9 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
       before do
         expect(api).to receive(:create).with(name)
         allow(api).to receive_messages(
-          :set_lacp_mode => true,
-          :set_members => true,
-          :set_minimum_links => true,
+          set_lacp_mode: true,
+          set_members: true,
+          set_minimum_links: true
         )
       end
 
@@ -183,7 +180,6 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
         provider.create
         expect(provider.minimum_links).to eq resource[:minimum_links]
       end
-
     end
 
     describe '#destroy' do
@@ -218,7 +214,8 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
 
     describe '#minimum_links=(val)' do
       it 'updates minimum_links on the provider' do
-        expect(api).to receive(:set_minimum_links).with(resource[:name], value: 4)
+        expect(api).to receive(:set_minimum_links).with(resource[:name],
+                                                        value: 4)
         provider.minimum_links = 4
         expect(provider.minimum_links).to eq 4
       end

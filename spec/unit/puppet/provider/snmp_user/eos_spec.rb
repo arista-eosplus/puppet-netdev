@@ -24,7 +24,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   let(:resource) { type.new(resource_hash) }
   let(:provider) { described_class.new(resource) }
 
-  let (:api) { double('snmp') }
+  let(:api) { double('snmp') }
 
   def snmp
     snmp = Fixtures[:snmp]
@@ -33,12 +33,11 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   end
 
   before :each do
-    allow(described_class.node).to receive(:api).with('snmp', {:path=>"rbeapi/netdev", :namespace=>"Rbeapi::Netdev"}).and_return(api)
-    allow(provider.node).to receive(:api).with('snmp', {:path=>"rbeapi/netdev", :namespace=>"Rbeapi::Netdev"}).and_return(api)
+    allow(described_class.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
+    allow(provider.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:snmp_users).and_return(snmp) }
 
     describe '.instances' do
@@ -53,7 +52,6 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   end
 
   describe '#flush' do
-
     let(:provider) do
       provider = described_class.new(resource_hash)
       provider.resource = resource
@@ -153,7 +151,6 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   it_behaves_like 'provider exists?'
 
   describe '.prefetch(resources)' do
-
     before { allow(api).to receive(:snmp_users).and_return(snmp) }
 
     let(:matching_resource) do
