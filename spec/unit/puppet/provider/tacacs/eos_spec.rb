@@ -32,7 +32,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:tacacs).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -59,7 +58,6 @@ describe Puppet::Type.type(:tacacs).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:get).and_return(tacacs) }
 
     describe '.instances' do
@@ -116,7 +114,6 @@ describe Puppet::Type.type(:tacacs).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#exists?' do
       subject { provider.exists? }
 

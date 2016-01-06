@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:snmp_notification).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -61,7 +60,6 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:get).and_return(snmp) }
 
     describe '.instances' do
@@ -91,7 +89,7 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
       let :resources do
         {
           'all' => Puppet::Type.type(:snmp_notification).new(name: 'all'),
-          'bgp' => Puppet::Type.type(:snmp_notification).new(name: 'bgp'),
+          'bgp' => Puppet::Type.type(:snmp_notification).new(name: 'bgp')
         }
       end
 
@@ -118,14 +116,13 @@ describe Puppet::Type.type(:snmp_notification).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#enable=(value)' do
       it 'updates enable in the provider' do
-        expect(api).to receive(:set_notification).with(name: resource[:name], state: 'off')
+        expect(api).to receive(:set_notification).with(name: resource[:name],
+                                                       state: 'off')
         provider.enable = :false
         expect(provider.enable).to eq(:false)
       end
     end
-
   end
 end

@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:snmp_community).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -63,7 +62,6 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:get).and_return(snmp) }
 
     describe '.instances' do
@@ -96,7 +94,7 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
       let :resources do
         {
           'public' => Puppet::Type.type(:snmp_community).new(name: 'public'),
-          'private' => Puppet::Type.type(:snmp_community).new(name: 'private'),
+          'private' => Puppet::Type.type(:snmp_community).new(name: 'private')
         }
       end
 
@@ -128,7 +126,6 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#exists?' do
       subject { provider.exists? }
 
@@ -150,8 +147,8 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
 
       before do
         allow(api).to receive_messages(
-          :set_community_access => true,
-          :set_community_acl => true
+          set_community_access: true,
+          set_community_acl: true
         )
         expect(api).to receive(:add_community).with(resource[:name])
       end
@@ -190,11 +187,11 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
 
     describe '#acl=(value)' do
       it 'updates acl in the provider' do
-        expect(api).to receive(:set_community_acl).with(resource[:name], value: 'foo')
+        expect(api).to receive(:set_community_acl).with(resource[:name],
+                                                        value: 'foo')
         provider.acl = 'foo'
         expect(provider.acl).to eq('foo')
       end
     end
-
   end
 end

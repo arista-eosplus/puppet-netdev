@@ -34,7 +34,6 @@ require 'spec_helper'
 include FixtureHelpers
 
 describe Puppet::Type.type(:radius_global).provider(:eos) do
-
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
@@ -64,7 +63,6 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
   end
 
   context 'class methods' do
-
     before { allow(api).to receive(:get).and_return(radius) }
 
     describe '.instances' do
@@ -97,7 +95,8 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
       let :resources do
         {
           'settings' => Puppet::Type.type(:radius_global).new(name: 'settings'),
-          'alternate' => Puppet::Type.type(:radius_global).new(name: 'alternate'),
+          'alternate' => Puppet::Type.type(:radius_global).new(name:
+                                                               'alternate')
         }
       end
 
@@ -131,10 +130,10 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-
     describe '#set_key=(value)' do
       it 'updates key in the provider' do
-        expect(api).to receive(:set_global_key).with(value: 'foo', key_format: 0)
+        expect(api).to receive(:set_global_key).with(value: 'foo',
+                                                     key_format: 0)
         provider.key = 'foo'
         provider.key_format = 0
         provider.flush
