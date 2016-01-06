@@ -1,17 +1,13 @@
 {
   "name": "aristanetworks-netdev_stdlib_eos",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "Arista Networks, EOS+",
   "summary": "NetDev Providers for Arista EOS",
   "license": "BSD-3-Clause",
   "source": "https://github.com/arista-eosplus/puppet-netdev",
   "project_page": "https://github.com/arista-eosplus/puppet-netdev",
-  "issues_url": "https://github.com/puppetlabs/arista-eosplus/puppet-netdev",
+  "issues_url": "https://github.com/arista-eosplus/puppet-netdev/issues",
   "dependencies": [
-    {
-      "name": "puppetlabs-stdlib",
-      "version_range": ">= 1.0.0"
-    },
     {
       "name": "puppetlabs-netdev_stdlib",
       "version_range": ">= 0.10.0"
