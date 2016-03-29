@@ -34,8 +34,6 @@ Puppet::Type.type(:snmp_community).provide(:eos) do
   end
 
   def group=(value)
-    require 'pry'
-    binding.pry
     node.api('snmp').set_community_access(resource[:name], value.to_s)
     @property_hash[:group] = value
   end
