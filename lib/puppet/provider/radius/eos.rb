@@ -37,7 +37,7 @@ Puppet::Type.type(:radius).provide(:eos) do
   def enable=(value)
     val = value == :true
     unless val
-      not_supported "radius disable"
+      not_supported 'radius disable'
     end
     @property_hash[:enable] = :true
   end

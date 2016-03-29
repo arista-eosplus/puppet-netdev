@@ -37,7 +37,7 @@ Puppet::Type.type(:tacacs).provide(:eos) do
   def enable=(value)
     val = value == :true
     unless val
-      not_supported "tacacs disable"
+      not_supported 'tacacs disable'
     end
     @property_hash[:enable] = :true
   end

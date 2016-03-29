@@ -111,7 +111,7 @@ Puppet::Type.type(:tacacs_server).provide(:eos) do
   private :validate_identity
 
   def self.namevar(opts)
-    hostname  = opts[:hostname] or fail ArgumentError, 'hostname required'
+    hostname = opts[:hostname] or fail ArgumentError, 'hostname required'
     port = opts[:port] || 49
     "#{hostname}/#{port}"
   end
