@@ -26,7 +26,7 @@ Puppet::Type.type(:radius).provide(:eos) do
   def self.instances
     result = node.api('radius').get
     provider_hash = { name: 'settings', ensure: :present }
-    provider_hash[:enable] = true
+    provider_hash[:enable] = :true
     [new(provider_hash)]
   end
 
@@ -36,7 +36,8 @@ Puppet::Type.type(:radius).provide(:eos) do
 
   def enable=(value)
     val = value == :true
-    node.api('radius').set_enable(value: val)
-    @property_hash[:enable] = value
+    unless val
+      not_supported "disable radius"
+    end
   end
 end
