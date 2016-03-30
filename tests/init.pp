@@ -82,6 +82,9 @@ radius_global { 'settings':
 
 # name format: <hostname|ip>/<auth_port>/<acct_port>
 radius_server { '192.0.2.51/1812/1813':
+  hostname  => '192.0.2.51',
+  auth_port => 1812,
+  acct_port => 1813,
   key       => '075E6141573612000E',
   #vrf       => 'mgmt',
 }
@@ -134,15 +137,25 @@ tacacs { 'settings':
 }
 
 tacacs_global { 'settings':
-  timeout          => '5',
+  timeout => '5',
 }
 
-# name format: <hostname|ip>/<port>
-tacacs_server { 'tacacs1.example.com/49':
+# name format: <hostname|ip>/[vrf]/<port>
+tacacs_server { 'tacacs1.example.com//49':
   ensure     => 'present',
+  hostname   => 'tacacs1.example.com',
+  port       => '49',
   key        => '060D0A38735D1D0B0C1915',
   key_format => '7',
 }
+#tacacs_server { 'tacacs1.example.com/mgmt/49':
+#  ensure     => 'present',
+#  hostname   => 'tacacs1.example.com',
+#  vrf        => 'mgmt',
+#  port       => '49',
+#  key        => '060D0A38735D1D0B0C1915',
+#  key_format => '7',
+#}
 
 tacacs_server_group { 'production':
   ensure  => present,
