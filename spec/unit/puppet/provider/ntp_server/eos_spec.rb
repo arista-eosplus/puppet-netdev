@@ -136,13 +136,13 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
 
     describe '#prefer=(value)' do
       it 'updates prefer with value :true' do
-        expect(api).to receive(:set_prefer).with(resource[:name], value: true)
+        expect(api).to receive(:set_prefer).with(resource[:name], true)
         provider.prefer = :true
         expect(provider.prefer).to eq(:true)
       end
 
       it 'updates prefer with value :false' do
-        expect(api).to receive(:set_prefer).with(resource[:name], value: false)
+        expect(api).to receive(:set_prefer).with(resource[:name], false)
         provider.prefer = :false
         expect(provider.prefer).to eq(:false)
       end
