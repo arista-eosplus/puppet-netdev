@@ -112,7 +112,8 @@ Puppet::Type.type(:tacacs_server).provide(:eos) do
 
   def self.namevar(opts)
     hostname = opts[:hostname] or fail ArgumentError, 'hostname required'
+    vrf = opts[:vrf] || ''
     port = opts[:port] || 49
-    "#{hostname}/#{port}"
+    "#{hostname}/#{vrf}/#{port}"
   end
 end
