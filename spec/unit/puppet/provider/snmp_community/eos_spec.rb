@@ -39,7 +39,7 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
     resource_hash = {
       ensure: :present,
       name: 'public',
-      group: :ro,
+      group: 'ro',
       acl: 'foo',
       provider: described_class.name
     }
@@ -84,7 +84,7 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
         include_examples 'provider resource methods',
                          ensure: :present,
                          name: 'public',
-                         group: :ro,
+                         group: 'ro',
                          acl: 'foo',
                          exists?: true
       end
@@ -110,7 +110,7 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
       it 'sets the provider instance of the managed resource' do
         subject
         expect(resources['public'].provider.name).to eq('public')
-        expect(resources['public'].provider.group).to eq(:ro)
+        expect(resources['public'].provider.group).to eq('ro')
         expect(resources['public'].provider.acl).to eq('foo')
         expect(resources['public'].provider.exists?).to be_truthy
       end
@@ -160,7 +160,7 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
 
       it 'sets group to the resource value' do
         provider.create
-        expect(provider.group).to eq(:ro)
+        expect(provider.group).to eq('ro')
       end
 
       it 'sets acl to the resource value' do

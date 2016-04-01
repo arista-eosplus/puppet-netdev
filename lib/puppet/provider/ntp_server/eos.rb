@@ -32,9 +32,20 @@ Puppet::Type.type(:ntp_server).provide(:eos) do
     end
   end
 
+  def create
+    prefer = resource[:prefer] == :true
+    node.api('ntp').add_server(resource[:name], prefer)
+    @property_hash = { name: resource[:name], ensure: :present }
+  end
+
+  def destroy
+    node.api('ntp').remove_server(resource[:name])
+    @property_hash = { name: resource[:name], ensure: :absent }
+  end
+
   def prefer=(value)
     val = value == :true
-    node.api('ntp').set_prefer(resource[:name], value: val)
+    node.api('ntp').set_prefer(resource[:name], val)
     @property_hash[:prefer] = value
   end
 

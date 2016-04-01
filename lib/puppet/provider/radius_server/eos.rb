@@ -103,7 +103,7 @@ Puppet::Type.type(:radius_server).provide(:eos) do
   private :validate_identity
 
   def self.namevar(opts)
-    hostname  = opts[:hostname] || fail ArgumentError, 'hostname required'
+    hostname  = opts[:hostname] or fail ArgumentError, 'hostname required'
     auth_port = opts[:auth_port] || 1812
     acct_port = opts[:acct_port] || 1813
     "#{hostname}/#{auth_port}/#{acct_port}"
