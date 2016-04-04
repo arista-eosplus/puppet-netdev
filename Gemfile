@@ -31,6 +31,8 @@ group :development, :test do
   gem 'pry-stack_explorer',      require: false
   gem 'simplecov',               require: false
   gem 'puppetlabs_spec_helper'
+  gem 'puppet-lint'
+  gem 'metadata-json-lint'
 end
 
 ENV['GEM_PUPPET_VERSION'] ||= ENV['PUPPET_GEM_VERSION']
