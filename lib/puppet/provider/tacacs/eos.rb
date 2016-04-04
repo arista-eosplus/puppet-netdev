@@ -26,7 +26,7 @@ Puppet::Type.type(:tacacs).provide(:eos) do
   def self.instances
     result = node.api('tacacs').get
     provider_hash = { name: 'settings', ensure: :present }
-    provider_hash[:enable] = result['enable'].to_s.to_sym
+    provider_hash[:enable] = :true
     [new(provider_hash)]
   end
 
@@ -36,7 +36,9 @@ Puppet::Type.type(:tacacs).provide(:eos) do
 
   def enable=(value)
     val = value == :true
-    node.api('tacacs').set_enable(value: val)
-    @property_hash[:enable] = value
+    unless val
+      not_supported 'tacacs disable'
+    end
+    @property_hash[:enable] = :true
   end
 end

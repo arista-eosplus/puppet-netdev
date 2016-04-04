@@ -33,7 +33,7 @@ Puppet::Type.type(:network_interface).provide(:eos) do
       provider_hash[:enable] = enable.to_s.to_sym
       if attrs[:forced]
         speed, duplex = attrs[:speed].scan(/(\d+[gm]?)(full|half)/).first
-        provider_hash[:duplex] =  duplex.to_sym
+        provider_hash[:duplex] = duplex.to_sym
         provider_hash[:speed] = self.convert_speed_to_type(speed)
       else
         provider_hash[:duplex] = :auto

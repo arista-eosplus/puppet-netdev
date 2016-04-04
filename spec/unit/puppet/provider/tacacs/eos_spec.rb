@@ -132,15 +132,14 @@ describe Puppet::Type.type(:tacacs).provider(:eos) do
 
     describe '#enable' do
       it 'sets enable to :true in the provider' do
-        expect(api).to receive(:set_enable).with(value: true)
         provider.enable = :true
         expect(provider.enable).to eq(:true)
       end
 
       it 'sets enable to :false in the provider' do
-        expect(api).to receive(:set_enable).with(value: false)
+        # Tacacs cannot be disabled in EOS
         provider.enable = :false
-        expect(provider.enable).to eq(:false)
+        expect(provider.enable).to eq(:true)
       end
     end
   end

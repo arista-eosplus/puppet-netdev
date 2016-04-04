@@ -27,7 +27,7 @@ Puppet::Type.type(:snmp_community).provide(:eos) do
     result = node.api('snmp').get
     result[:communities].map do |name, attrs|
       provider_hash = { name: name, ensure: :present }
-      provider_hash[:group] = attrs[:access].to_sym
+      provider_hash[:group] = attrs[:access]
       provider_hash[:acl] = attrs[:acl]
       new(provider_hash)
     end
