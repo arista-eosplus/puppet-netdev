@@ -29,7 +29,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-require 'rbeapi/client'
+require 'rbeapi/client' if Puppet.features.rbeapi?
 
 ##
 # PuppetX namespace
