@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2014-2017, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,14 +30,18 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 require 'spec_helper'
-
 include FixtureHelpers
 
 describe Puppet::Type.type(:ntp_server).provider(:eos) do
   let :resource do
     resource_hash = {
       name: '1.2.3.4',
-      prefer: true
+      key: 1,
+      maxpoll: 8,
+      minpoll: 5,
+      prefer: true,
+      source_interface: 'Ethernet1',
+      vrf: 'test'
     }
     Puppet::Type.type(:ntp_server).new(resource_hash)
   end
@@ -69,19 +73,23 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
         expect(subject.size).to eq(1)
       end
 
-      it 'contains ntp_server[settings]' do
+      it 'contains ntp_server[1.2.3.4]' do
         instance = subject.find { |p| p.name == '1.2.3.4' }
         expect(instance).to be_a described_class
       end
 
-      describe 'ntp_server[settings]' do
+      describe 'ntp_server[1.2.3.4]' do
         subject do
           described_class.instances.find { |p| p.name == '1.2.3.4' }
         end
 
         include_examples 'provider resource methods',
-                         name: '1.2.3.4',
-                         prefer: :true
+                         key: 1,
+                         prefer: :true,
+                         maxpoll: 8,
+                         minpoll: 5,
+                         source_interface: 'Ethernet1',
+                         vrf: 'test'
       end
     end
 
@@ -101,7 +109,7 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
         end
       end
 
-      it 'sets the provider instane of the managed resource' do
+      it 'sets the provider instance of the managed resource' do
         subject
         expect(resources['1.2.3.4'].provider.name).to eq('1.2.3.4')
         expect(resources['1.2.3.4'].provider.exists?).to be_truthy
@@ -134,17 +142,45 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
       end
     end
 
-    describe '#prefer=(value)' do
-      it 'updates prefer with value :true' do
-        expect(api).to receive(:set_prefer).with(resource[:name], true)
-        provider.prefer = :true
+    describe '#create' do
+      it 'creates a new server when ensure :present' do
+        resource[:ensure] = :present
+        expect(api).to receive(:add_server)
+          .with('1.2.3.4', false, key: '1', prefer: 'true', maxpoll: '8',
+                                  minpoll: '5', source_interface: 'Ethernet1',
+                                  vrf: 'test').and_return(true)
+        provider.create
+        provider.flush
+        expect(provider.name).to eq('1.2.3.4')
+        expect(provider.ensure).to eq(:present)
+        expect(provider.key).to eq(1)
         expect(provider.prefer).to eq(:true)
+        expect(provider.maxpoll).to eq(8)
+        expect(provider.minpoll).to eq(5)
+        expect(provider.source_interface).to eq('Ethernet1')
+        expect(provider.vrf).to eq('test')
       end
 
-      it 'updates prefer with value :false' do
-        expect(api).to receive(:set_prefer).with(resource[:name], false)
-        provider.prefer = :false
-        expect(provider.prefer).to eq(:false)
+      it 'raise an error when rbeapi cannot set configuration' do
+        resource[:ensure] = :present
+        expect(api).to receive(:add_server)
+          .with('1.2.3.4', false, key: '1', prefer: 'true', maxpoll: '8',
+                                  minpoll: '5', source_interface: 'Ethernet1',
+                                  vrf: 'test').and_return(false)
+        provider.create
+        expect { provider.flush }
+          .to raise_error(Puppet::Error, 'Unable to set Ntp_server[1.2.3.4]')
+        expect(provider.name).to eq('1.2.3.4')
+      end
+    end
+
+    describe '#destroy' do
+      it 'deletes a server when ensure :absent' do
+        resource[:ensure] = :absent
+        expect(api).to receive(:remove_server).with('1.2.3.4', 'test')
+        provider.destroy
+        provider.flush
+        expect(provider.ensure).to eq(:absent)
       end
     end
   end

@@ -30,20 +30,17 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 require 'spec_helper'
-
 include FixtureHelpers
 
-describe Puppet::Type.type(:ntp_config).provider(:eos) do
-  let(:type) { Puppet::Type.type(:ntp_config) }
-
+describe Puppet::Type.type(:ntp_auth_key).provider(:eos) do
   let :resource do
     resource_hash = {
-      name: 'settings',
-      authenticate: false,
-      source_interface: 'Loopback0',
-      trusted_key: ['1,5-70']
+      name: '1',
+      algorithm: 'md5',
+      mode: 7,
+      password: '06120A3258'
     }
-    type.new(resource_hash)
+    Puppet::Type.type(:ntp_auth_key).new(resource_hash)
   end
 
   let(:provider) { resource.provider }
@@ -73,30 +70,28 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
         expect(subject.size).to eq(1)
       end
 
-      it 'contains ntp_config[settings]' do
-        instance = subject.find { |p| p.name == 'settings' }
+      it 'contains ntp_auth_key[1]' do
+        instance = subject.find { |p| p.name == '1' }
         expect(instance).to be_a described_class
       end
 
-      describe 'ntp_config[settings]' do
+      describe 'ntp_auth_key[1]' do
         subject do
-          described_class.instances.find { |p| p.name == 'settings' }
+          described_class.instances.find { |p| p.name == '1' }
         end
 
         include_examples 'provider resource methods',
-                         name: 'settings',
-                         authenticate: :false,
-                         source_interface: 'Loopback0',
-                         trusted_key: ['1,5-70']
+                         algorithm: 'md5',
+                         mode: 7,
+                         password: '06120A3258'
       end
     end
 
     describe '.prefetch' do
       let(:resources) do
         {
-          'settings' => Puppet::Type.type(:ntp_config).new(name: 'settings'),
-          'alternative' => Puppet::Type.type(:ntp_config).new(name:
-                                                              'alternative')
+          '1' => Puppet::Type.type(:ntp_auth_key).new(name: '1'),
+          '5' => Puppet::Type.type(:ntp_auth_key).new(name: '5')
         }
       end
 
@@ -104,24 +99,22 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
 
       it 'resource providers are absent prior to calling .prefetch' do
         resources.values.each do |rsrc|
-          expect(rsrc.provider.source_interface).to eq(:absent)
+          expect(rsrc.provider.password).to eq(:absent)
         end
       end
 
-      it 'sets the provider instane of the managed resource' do
+      it 'sets the provider instance of the managed resource' do
         subject
-        expect(resources['settings'].provider.name).to eq 'settings'
-        expect(resources['settings'].provider.exists?).to be_truthy
-        expect(resources['settings'].provider.authenticate).to eq :false
-        expect(resources['settings'].provider.source_interface).to eq 'Loopback0'
-        expect(resources['settings'].provider.trusted_key).to eq ['1,5-70']
+        expect(resources['1'].provider.name).to eq('1')
+        expect(resources['1'].provider.exists?).to be_truthy
+        expect(resources['1'].provider.password).to eq('06120A3258')
       end
 
       it 'does not set the provider instance of the unmanaged resource' do
         subject
-        expect(resources['alternative'].provider.name).to eq 'alternative'
-        expect(resources['alternative'].provider.exists?).to be_falsy
-        expect(resources['alternative'].provider.source_interface).to eq :absent
+        expect(resources['5'].provider.name).to eq '5'
+        expect(resources['5'].provider.exists?).to be_falsy
+        expect(resources['5'].provider.password).to eq :absent
       end
     end
   end
@@ -143,28 +136,41 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
       end
     end
 
-    describe '#authenticate=(val)' do
-      it 'updates authenticate with value true' do
-        expect(api).to receive(:set_authenticate).with(enable: true)
-        provider.authenticate = :true
-        expect(provider.authenticate).to be_truthy
+    describe '#create' do
+      it 'creates a new key when ensure :present' do
+        resource[:ensure] = :present
+        expect(api).to receive(:set_authentication_key)
+          .with(key: '1', algorithm: 'md5', mode: '7', password: '06120A3258')
+          .and_return(true)
+        provider.create
+        provider.flush
+        expect(provider.name).to eq('1')
+        expect(provider.ensure).to eq(:present)
+        expect(provider.algorithm).to eq(:md5)
+        expect(provider.mode).to eq(7)
+        expect(provider.password).to eq('06120A3258')
+      end
+
+      it 'raises an error when rbeapi cannot set configuration' do
+        resource[:ensure] = :present
+        expect(api).to receive(:set_authentication_key)
+          .with(key: '1', algorithm: 'md5', mode: '7', password: '06120A3258')
+          .and_return(false)
+        provider.create
+        expect { provider.flush }
+          .to raise_error(Puppet::Error, 'Unable to set Ntp_auth_key[1]')
       end
     end
 
-    describe '#source_interface=(val)' do
-      it 'updates source_interace with value "Loopback1"' do
-        expect(api).to receive(:set_source_interface).with(value: 'Loopback1')
-        provider.source_interface = 'Loopback1'
-        expect(provider.source_interface).to eq('Loopback1')
-      end
-    end
-
-    describe '#trusted_key=(val)' do
-      it 'updates trusted_key with value "6"' do
-        expect(api).to receive(:set_trusted_key).once.ordered.with(default: true)
-        expect(api).to receive(:set_trusted_key).once.ordered.with(value: 6)
-        provider.trusted_key = [6]
-        expect(provider.trusted_key).to eq([6])
+    describe '#destroy' do
+      it 'deletes a server when ensure :absent' do
+        resource[:ensure] = :absent
+        expect(api).to receive(:set_authentication_key)
+          .with(key: '1', enable: false, algorithm: 'md5', mode: '7',
+                password: '06120A3258').and_return(true)
+        provider.destroy
+        provider.flush
+        expect(provider.ensure).to eq(:absent)
       end
     end
   end
