@@ -1,6 +1,6 @@
 {
   "name": "aristanetworks-netdev_stdlib_eos",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "author": "Arista Networks, EOS+",
   "summary": "NetDev Providers for Arista EOS",
   "license": "BSD-3-Clause",
@@ -19,14 +19,17 @@
       "operatingsystemrelease":[
         "4.13.7+",
         "4.14.x",
-        "4.15.x"
+        "4.15.x",
+        "4.16.x",
+        "4.17.x",
+        "4.18.x"
       ]
     }
   ],
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 3.0.0 < 5.0.0"
+      "version_requirement": ">= 3.0.0 < 6.0.0"
     }
   ],
   "tags": ["network", "netdev", "arista", "eos"]
