@@ -103,6 +103,7 @@ This module is supported on
 
  * Puppet 3.6 or later installed as an Arista EOS extension
  * Arista EOS 4.13 or later
+ * netdev-eos 1.2.0 requires rbeapi 1.2 for complete functionality
 
 ## Development
 

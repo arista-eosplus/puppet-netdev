@@ -1,5 +1,17 @@
 ---
+:authenticate: false
+:auth_keys:
+  1:
+    :algorithm: md5
+    :mode: 7
+    :password: 06120A3258
 :source_interface: Loopback0
 :servers:
   1.2.3.4:
+    :key: 1
+    :maxpoll: 8
+    :minpoll: 5
     :prefer: true
+    :source_interface: Ethernet1
+    :vrf: test
+:trusted_key: '1,5-70'

@@ -26,13 +26,27 @@ Puppet::Type.type(:ntp_config).provide(:eos) do
   def self.instances
     result = node.api('ntp').get
     provider_hash = { name: 'settings', ensure: :present }
+    provider_hash[:authenticate] = result[:authenticate].to_s.to_sym
     provider_hash[:source_interface] = result[:source_interface]
+    provider_hash[:trusted_key] = [result[:trusted_key]]
     [new(provider_hash)]
+  end
+
+  def authenticate=(value)
+    val = value == :true
+    node.api('ntp').set_authenticate(enable: val)
+    @property_hash[:authenticate] = val
   end
 
   def source_interface=(val)
     node.api('ntp').set_source_interface(value: val)
     @property_hash[:source_interface] = val
+  end
+
+  def trusted_key=(val)
+    node.api('ntp').set_trusted_key(default: true)
+    node.api('ntp').set_trusted_key(value: val[0])
+    @property_hash[:trusted_key] = val
   end
 
   def exists?
