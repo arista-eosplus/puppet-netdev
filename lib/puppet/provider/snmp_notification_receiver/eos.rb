@@ -33,9 +33,17 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   end
 
   def self.instances
-    receivers = netdev('snmp').snmp_notification_receivers
-    receivers.map do |rsrc_hash|
-      new(rsrc_hash.merge(name: namevar(rsrc_hash)))
+    result = node.api('snmp').get
+    result[:receivers].map do |rcvr|
+      provider_hash = { name: namevar(rcvr), ensure: :present }
+      provider_hash[:username] = rcvr[:username]
+      provider_hash[:port] = rcvr[:port]
+      provider_hash[:type] = rcvr[:type]
+      provider_hash[:version] = rcvr[:version]
+      provider_hash[:vrf] = rcvr[:vrf] ? rcvr[:vrf] : :default
+      #provider_hash[:security] = rcvr[:security]
+      #provider_hash[:source_interface] = rcvr[:source_interface]
+      new(provider_hash)
     end
   end
 
@@ -76,12 +84,7 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   def flush
     new_property_hash = @property_hash.merge(@property_flush)
     new_property_hash[:name] = name.split(':').first
-    case new_property_hash[:ensure]
-    when :present
-      netdev('snmp').snmp_notification_receiver_set(new_property_hash)
-    when :absent
-      netdev('snmp').snmp_notification_receiver_remove(new_property_hash)
-    end
+    node.api('snmp').set_notification_receiver(new_property_hash)
     @property_hash = new_property_hash
     @property_hash[:name] = self.class.namevar(new_property_hash)
   end
