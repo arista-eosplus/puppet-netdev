@@ -24,6 +24,7 @@ group :development, :test do
   gem 'yard'
   gem 'redcarpet'
   gem 'rake', '~> 10.1.0',       require: false
+  gem 'rb-readline'
   gem 'rspec', '~> 3.0.0'
   gem 'rspec-mocks', '~> 3.0.0'
   gem 'pry',                     require: false
