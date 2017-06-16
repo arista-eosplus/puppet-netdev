@@ -24,16 +24,20 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
   extend PuppetX::NetDev::EosApi
 
   def self.instances
-    users = netdev('snmp').snmp_users
-    resource_hash_ary = users.map do |user_hsh|
-      user_hsh.merge(
-        ensure: :present,
-        roles: [*user_hsh[:roles]],
-        name: namevar(user_hsh)
-      )
+    result = node.api('snmp').get
+    result[:users].map do |user|
+      provider_hash = { name: namevar(user), ensure: :present }
+      provider_hash[:roles] = [user[:group]]
+      provider_hash[:version] = user[:version]
+      #provider_hash[:auth] = user[:auth]
+      #provider_hash[:password] = user[:password]
+      #provider_hash[:privacy] = user[:privacy]
+      #provider_hash[:private_key] = user[:private_key]
+      #provider_hash[:localized_key] = user[:localized_key]
+      #provider_hash[:enforce_privacy] = user[:enforce_privacy]
+      #provider_hash[:engine_id] = user[:engine_id]
+      new(provider_hash)
     end
-
-    resource_hash_ary.map { |rsrc_hsh| new(rsrc_hsh) }
   end
 
   ##
@@ -79,19 +83,14 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
       version: version,
       ensure: :absent
     }
+    @property_flush[:ensure] = :absent
   end
 
   def flush
     new_property_hash = @property_hash.merge(@property_flush)
     new_property_hash[:name] = name.split(':').first
 
-    case new_property_hash[:ensure]
-    when :absent, 'absent'
-      update = netdev('snmp').snmp_user_destroy(new_property_hash)
-    else
-      update = netdev('snmp').snmp_user_set(new_property_hash)
-    end
-
-    @property_hash = new_property_hash.merge(update)
+    fail('Failed to configure user') unless
+    node.api('snmp').set_user(new_property_hash)
   end
 end
