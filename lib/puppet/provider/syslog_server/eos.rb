@@ -7,7 +7,7 @@ begin
 rescue LoadError => detail
   require 'pathname' # JJM WORK_AROUND #14073
   module_base = Pathname.new(__FILE__).dirname
-  require module_base + '../../../' + 'puppet_x/net_dev/eos_ap'
+  require module_base + '../../../' + 'puppet_x/net_dev/eos_api'
 end
 
 Puppet::Type.type(:syslog_server).provide(:eos) do
