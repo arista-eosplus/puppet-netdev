@@ -1,16 +1,26 @@
 --- 
-  - !ruby/sym name: jeff
-    !ruby/sym version: !ruby/sym v3
-    !ruby/sym engine_id: f5717f00420008177800
-    !ruby/sym auth: !ruby/sym sha
-    !ruby/sym privacy: !ruby/sym aes128
-    !ruby/sym roles: developers
-  - !ruby/sym name: nigel
-    !ruby/sym version: !ruby/sym v2
-    !ruby/sym roles: sysops
-  - !ruby/sym name: nigel
-    !ruby/sym version: !ruby/sym v3
-    !ruby/sym engine_id: f5717f00420008177800
-    !ruby/sym auth: !ruby/sym sha
-    !ruby/sym privacy: !ruby/sym aes128
-    !ruby/sym roles: sysops
+  !ruby/sym location: Texas
+  !ruby/sym contact: jeff
+  !ruby/sym chassis_id: jeff
+  !ruby/sym source_interface: ''
+  !ruby/sym communities: {}
+  !ruby/sym notifications: []
+  !ruby/sym receivers: []
+  !ruby/sym users:
+    - !ruby/sym name: jeff
+      !ruby/sym version: !ruby/sym v3
+      !ruby/sym engine_id: f5717f00420008177800
+      !ruby/sym auth_mode: !ruby/sym sha
+      # !ruby/sym auth_pass: !ruby/sym 24b3c33aa329a3b7856733f5117fdf9ae7d8b153
+      !ruby/sym priv_mode: !ruby/sym aes
+      # !ruby/sym priv_pass: !ruby/sym f54e1d3dd7cf39e1745e6224344384cf
+      !ruby/sym group: developers
+    - !ruby/sym name: nigel
+      !ruby/sym version: !ruby/sym v2
+      !ruby/sym group: sysops
+    - !ruby/sym name: nigel
+      !ruby/sym version: !ruby/sym v3
+      !ruby/sym engine_id: f5717f00420008177800
+      !ruby/sym auth_mode: !ruby/sym md5
+      !ruby/sym priv_mode: !ruby/sym des
+      !ruby/sym group: sysops
