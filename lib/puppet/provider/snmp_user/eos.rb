@@ -14,6 +14,8 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
   confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
   confine feature: :rbeapi
 
+  PRIV_MODE = { :aes => :aes128, :des => :des }.freeze
+
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
@@ -25,17 +27,22 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
 
   def self.instances
     result = node.api('snmp').get
+    require 'pry'
+    #binding.pry
     result[:users].map do |user|
+      # TODO
       provider_hash = { name: namevar(user), ensure: :present }
       provider_hash[:roles] = [user[:group]]
       provider_hash[:version] = user[:version]
-      #provider_hash[:auth] = user[:auth]
-      #provider_hash[:password] = user[:password]
-      #provider_hash[:privacy] = user[:privacy]
-      #provider_hash[:private_key] = user[:private_key]
-      #provider_hash[:localized_key] = user[:localized_key]
-      #provider_hash[:enforce_privacy] = user[:enforce_privacy]
-      #provider_hash[:engine_id] = user[:engine_id]
+
+      provider_hash[:engine_id] = user[:engine_id]
+
+      provider_hash[:auth] = user[:auth_mode] if user[:auth_mode]
+      # Type indicates Cleartext password. We only have encrypted
+      provider_hash[:password] = user[:auth_pass] if user[:auth_pass]
+
+      provider_hash[:privacy] = PRIV_MODE[user[:priv_mode]] if user[:priv_mode]
+      provider_hash[:private_key] = user[:priv_pass] if user[:priv_pass]
       new(provider_hash)
     end
   end
