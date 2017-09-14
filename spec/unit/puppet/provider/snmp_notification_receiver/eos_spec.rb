@@ -56,10 +56,14 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
   let(:api) { double('snmp') }
 
   before :each do
-    allow(described_class.node).to receive(:api).with('snmp',
-                                                      { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
-    allow(provider.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev',
-                                                         namespace: 'Rbeapi::Netdev' }).and_return(api)
+    #allow(described_class.node).to receive(:api).with('snmp',
+    #                                                  { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
+    #allow(provider.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev',
+    #                                                     namespace: 'Rbeapi::Netdev' }).and_return(api)
+    allow(described_class.node).to receive(:api).with('snmp').and_return(api)
+    allow(provider.node).to receive(:api).with('snmp').and_return(api)
+    allow(api).to receive(:get).
+        and_return(fixture(:api_snmp_notification_receivers))
   end
 
   it_behaves_like 'provider exists?'
@@ -70,7 +74,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
 
       context 'when there are no duplicate hosts' do
         before :each do
-          allow(api).to receive(:snmp_notification_receivers)
+          allow(api).to receive(:get)
             .and_return(fixture(:api_snmp_notification_receivers))
         end
 
@@ -79,7 +83,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
 
       context 'when there are duplicate host entries' do
         before :each do
-          allow(api).to receive(:snmp_notification_receivers)
+          allow(api).to receive(:get)
             .and_return(fixture(:api_snmp_notification_receivers_duplicates))
         end
 
@@ -93,7 +97,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
       context 'when there are more duplicate host entries' do
         before :each do
           fixed_data = fixture(:api_snmp_notification_receivers_more_duplicates)
-          allow(api).to receive(:snmp_notification_receivers)
+          allow(api).to receive(:get)
             .and_return(fixed_data)
         end
 
@@ -104,7 +108,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
     describe '.prefetch' do
       before :each do
         fixed_data = fixture(:api_snmp_notification_receivers_more_duplicates)
-        allow(api).to receive(:snmp_notification_receivers)
+        allow(api).to receive(:get)
           .and_return(fixed_data)
       end
 
@@ -163,7 +167,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
   describe '#flush' do
     context 'when creating' do
       before :each do
-        allow(api).to receive(:snmp_notification_receiver_set)
+        allow(api).to receive(:set_notification_receiver)
           .and_return(true)
       end
       subject do
@@ -173,13 +177,13 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
 
       let(:name) { '127.0.0.1:snmpuser:162' }
 
-      it 'calls snmp_notification_receiver_set' do
-        expect(api).to receive(:snmp_notification_receiver_set)
+      it 'calls set_notification_receiver' do
+        expect(api).to receive(:set_notification_receiver)
           .and_return(true)
         subject
       end
       it 'adds the default port of 162' do
-        expect(api).to receive(:snmp_notification_receiver_set)
+        expect(api).to receive(:set_notification_receiver)
           .with(resource_hash.merge(port: 162)).and_return(true)
         subject
       end
@@ -203,7 +207,7 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
     context 'when destroying' do
       let(:resource_override) { { ensure: :absent } }
       before :each do
-        allow(api).to receive(:snmp_notification_receiver_remove)
+        allow(api).to receive(:set_notification_receiver)
           .and_return(true)
       end
       subject do
@@ -213,8 +217,9 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
 
       let(:name) { '127.0.0.1:snmpuser:162' }
 
-      it 'calls snmp_notification_receiver_remove' do
-        expect(api).to receive(:snmp_notification_receiver_remove)
+      it 'calls set_notification_receiver to remove entries' do
+        expect(api).to receive(:set_notification_receiver)
+          .with({port: 162, type: :traps, version: :v3, name: "127.0.0.1", ensure: :absent, username: "snmpuser", security: :noauth})
           .and_return(true)
         subject
       end

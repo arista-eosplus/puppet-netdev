@@ -1,51 +1,205 @@
---- 
-  - !ruby/sym name: "127.0.0.1"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 162
-    !ruby/sym security: noauth
-    !ruby/sym version: v3
-    !ruby/sym type: !ruby/sym traps
-    !ruby/sym username: public
-  - !ruby/sym name: "127.0.0.1"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 162
-    !ruby/sym security: auth
-    !ruby/sym version: v3
-    !ruby/sym type: !ruby/sym traps
-    !ruby/sym username: smtpuser
-  - !ruby/sym name: "127.0.0.2"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 162
-    !ruby/sym version: v2
-    !ruby/sym type: !ruby/sym traps
-    !ruby/sym community: private
-  - !ruby/sym name: "127.0.0.3"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 162
-    !ruby/sym version: v1
-    !ruby/sym type: !ruby/sym traps
-    !ruby/sym community: public
-  - !ruby/sym name: "127.0.0.4"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 10162
-    !ruby/sym version: v2
-    !ruby/sym type: !ruby/sym informs
-    !ruby/sym community: private
-  - !ruby/sym name: "127.0.0.4"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 162
-    !ruby/sym version: v1
-    !ruby/sym type: !ruby/sym traps
-    !ruby/sym community: "priv@te"
-  - !ruby/sym name: "127.0.0.4"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 162
-    !ruby/sym version: v1
-    !ruby/sym type: !ruby/sym traps
-    !ruby/sym community: public
-  - !ruby/sym name: "127.0.0.4"
-    !ruby/sym ensure: !ruby/sym present
-    !ruby/sym port: 20162
-    !ruby/sym version: v1
-    !ruby/sym type: !ruby/sym traps
-    !ruby/sym community: private
+---
+:location: Texas
+:contact: ''
+:chassis_id: ''
+:source_interface: ''
+:communities: {}
+:notifications:
+- :name: bgp
+  :state: default
+- :name: bgp arista-backward-transition
+  :state: default
+- :name: bgp arista-established
+  :state: default
+- :name: bgp backward-transition
+  :state: default
+- :name: bgp established
+  :state: default
+- :name: entity
+  :state: default
+- :name: entity arista-ent-sensor-alarm
+  :state: default
+- :name: entity ent-config-change
+  :state: default
+- :name: entity ent-state-oper-disabled
+  :state: default
+- :name: entity ent-state-oper-enabled
+  :state: default
+- :name: lldp
+  :state: default
+- :name: lldp rem-tables-change
+  :state: default
+- :name: mpls-ldp
+  :state: default
+- :name: mpls-ldp mpls-ldp-session-down
+  :state: default
+- :name: mpls-ldp mpls-ldp-session-up
+  :state: default
+- :name: msdp
+  :state: default
+- :name: msdp backward-transition
+  :state: default
+- :name: msdp established
+  :state: default
+- :name: ospf
+  :state: default
+- :name: ospf if-auth-failure
+  :state: default
+- :name: ospf if-config-error
+  :state: default
+- :name: ospf if-state-change
+  :state: default
+- :name: ospf nbr-state-change
+  :state: default
+- :name: pim
+  :state: default
+- :name: pim neighbor-loss
+  :state: default
+- :name: snmp
+  :state: default
+- :name: snmp authentication
+  :state: default
+- :name: snmp link-down
+  :state: default
+- :name: snmp link-up
+  :state: default
+- :name: snmpConfigManEvent
+  :state: default
+- :name: snmpConfigManEvent arista-config-man-event
+  :state: default
+- :name: switchover
+  :state: default
+- :name: switchover arista-redundancy-switch-over-notif
+  :state: default
+- :name: test
+  :state: default
+- :name: test arista-test-notification
+  :state: default
+- :name: vrrp
+  :state: default
+- :name: vrrp trap-new-master
+  :state: default
+- :name: all
+  :state: default
+:receivers:
+- :name: 10.0.0.1
+  :vrf: jere
+  :type: traps
+  :version: v2
+  :username: public
+  :port: '162'
+- :name: 192.0.2.2
+  :vrf: default
+  :type: traps
+  :version: v1
+  :username: public
+  :port: '1234'
+- :name: 192.0.2.3
+  :vrf: default
+  :type: traps
+  :version: v1
+  :username: public
+  :port: '1234'
+- :name: 192.0.2.4
+  :vrf: default
+  :type: traps
+  :version: v1
+  :username: public
+  :port: '1234'
+- :name: 192.0.2.4
+  :vrf: default
+  :type: traps
+  :version: v1
+  :username: public
+  :port: '5555'
+- :name: 192.0.2.4
+  :vrf: default
+  :type: traps
+  :version: v1
+  :username: public
+  :port: '6666'
+- :name: 192.0.2.4
+  :vrf: default
+  :type: traps
+  :version: v1
+  :username: public
+  :port: '7777'
+- :name: 192.0.2.4
+  :vrf: default
+  :type: traps
+  :version: v1
+  :username: public
+  :port: '8888'
+:users:
+- :name: puppet931
+  :group: puppet_users
+  :version: v3
+  :priv_mode: 
+  :priv_pass: 
+  :engine_id: f5717f080027ec585300
+  :auth_mode: sha
+  :auth_pass: bb2b66bc7d26f4d0cb403d8d213a5b38a2a8ef9f
+- :name: puppet933
+  :group: puppet_users
+  :version: v3
+  :priv_mode: aes
+  :priv_pass: 59dcfc6a66d13fb1c74ba8c0f07c157d46615872
+  :engine_id: f5717f080027ec585300
+  :auth_mode: sha
+  :auth_pass: bb2b66bc7d26f4d0cb403d8d213a5b38a2a8ef9f
+- :name: user1
+  :group: users
+  :version: v1
+- :name: user1
+  :group: users
+  :version: v2
+- :name: user11
+  :group: v1users
+  :version: v1
+- :name: user2
+  :group: users
+  :version: v1
+- :name: user21
+  :group: v2users
+  :version: v2
+- :name: user22
+  :group: v2users
+  :version: v2
+- :name: user3
+  :group: admins
+  :version: v3
+  :priv_mode: aes
+  :priv_pass: f54e1d3dd7cf39e1745e6224344384cf
+  :engine_id: f5717f080027ec585300
+  :auth_mode: md5
+  :auth_pass: 6a4098111e032a3b966c6e364f492528
+- :name: user4
+  :group: admins
+  :version: v3
+  :priv_mode: des
+  :priv_pass: c7e5f8ffb7af377c4a0521b3e0bb18b3
+  :engine_id: f5717f080027ec585300
+  :auth_mode: md5
+  :auth_pass: 6a4098111e032a3b966c6e364f492528
+- :name: user5
+  :group: admins
+  :version: v3
+  :priv_mode: 
+  :priv_pass: 
+  :engine_id: f5717f080027ec585300
+  :auth_mode: md5
+  :auth_pass: 6a4098111e032a3b966c6e364f492528
+- :name: user6
+  :group: admins
+  :version: v3
+  :priv_mode: 
+  :priv_pass: 
+  :engine_id: f5717f080027ec585300
+  :auth_mode: sha
+  :auth_pass: 24b3c33aa329a3b7856733f5117fdf9ae7d8b153
+- :name: user7
+  :group: admins
+  :version: v3
+  :engine_id: 
+  :auth_mode: 
+  :auth_pass: 
