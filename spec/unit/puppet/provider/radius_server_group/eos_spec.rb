@@ -83,7 +83,8 @@ describe Puppet::Type.type(:radius_server_group).provider(:eos) do
     describe '#flush' do
       before :each do
         allow(api).to receive_message_chain(:groups, :create).and_return(true)
-        allow(api).to receive_message_chain(:groups, :set_servers).and_return(true)
+        allow(api).to receive_message_chain(:groups, :set_servers)
+          .and_return(true)
         allow(api).to receive_message_chain(:groups, :delete).and_return(true)
       end
 
@@ -120,7 +121,7 @@ describe Puppet::Type.type(:radius_server_group).provider(:eos) do
       context 'after updating servers' do
         subject do
           provider.create
-          provider.servers = ([])
+          provider.servers = []
         end
 
         it 'calls #set_servers' do
