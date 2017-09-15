@@ -59,27 +59,27 @@ Puppet::Type.type(:port_channel).provide(:eos) do
     @property_hash[:description] = val
   end
 
-  def id=(val)
+  def id=(_val)
     not_supported 'id'
   end
 
-  def force=(val)
+  def force=(_val)
     not_supported 'force'
   end
 
-  def speed=(val)
+  def speed=(_val)
     not_supported 'speed'
   end
 
-  def duplex=(val)
+  def duplex=(_val)
     not_supported 'duplex'
   end
 
-  def flowcontrol_send=(val)
+  def flowcontrol_send=(_val)
     not_supported 'flowcontrol_send'
   end
 
-  def flowcontrol_receive=(val)
+  def flowcontrol_receive=(_val)
     not_supported 'flowcontrol_receive'
   end
 
