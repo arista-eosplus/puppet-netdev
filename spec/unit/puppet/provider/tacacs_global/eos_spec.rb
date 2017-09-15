@@ -91,14 +91,6 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
   end
 
   context 'resource (instance) methods' do
-    #describe '#key=(value)' do
-    #  it 'updates the global key' do
-    #    expect(api).to receive(:set_global_key).with(key_format: 0, value: '070E234F1F5B4A')
-    #    provider.key = '070E234F1F5B4A'
-    #    expect(provider.key).to eq('070E234F1F5B4A')
-    #  end
-    #end
-
     describe '#flush' do
       before :each do
         allow(api).to receive(:set_global_key).and_return(true)
