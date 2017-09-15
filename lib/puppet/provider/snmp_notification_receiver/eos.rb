@@ -110,7 +110,7 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
   # @return [Hash<Symbol,Object>]
   def specified_properties
     resource.to_hash.reject do |key, val|
-      [:provider, :loglevel].include?(key) || val.nil?
+      %i[provider loglevel].include?(key) || val.nil?
     end
   end
   private :specified_properties
