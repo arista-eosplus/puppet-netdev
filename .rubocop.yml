@@ -1,0 +1,39 @@
+---
+AllCops:
+    Exclude:
+        - '**/*.gemspec'
+        - 'tmp/**/*'
+        - 'pkg/**/*'
+
+Metrics/CyclomaticComplexity:
+  Max: 20
+
+Metrics/MethodLength:
+  Max: 20
+
+Style/AccessorMethodName:
+  Enabled: False
+
+Style/HashSyntax:
+  Enabled: false
+
+Style/SignalException:
+  Enabled: False
+
+Style/GuardClause:
+  Enabled: False
+
+Metrics/PerceivedComplexity:
+  Max: 20 
+
+Metrics/AbcSize:
+  Max: 50
+
+Metrics/ClassLength:
+  Max: 130
+
+Metrics/BlockLength:
+  Enabled: False
+
+Lint/UselessAssignment:
+  Enabled: False
