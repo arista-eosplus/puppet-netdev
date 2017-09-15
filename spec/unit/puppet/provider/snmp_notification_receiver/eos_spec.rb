@@ -58,8 +58,8 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
   before :each do
     allow(described_class.node).to receive(:api).with('snmp').and_return(api)
     allow(provider.node).to receive(:api).with('snmp').and_return(api)
-    allow(api).to receive(:get).
-        and_return(fixture(:api_snmp_notification_receivers))
+    allow(api).to receive(:get)
+      .and_return(fixture(:api_snmp_notification_receivers))
   end
 
   it_behaves_like 'provider exists?'
@@ -215,7 +215,8 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
 
       it 'calls set_notification_receiver to remove entries' do
         expect(api).to receive(:set_notification_receiver)
-          .with({port: 162, type: :traps, version: :v3, name: "127.0.0.1", ensure: :absent, username: "snmpuser", security: :noauth})
+          .with(port: 162, type: :traps, version: :v3, name: '127.0.0.1',
+                ensure: :absent, username: 'snmpuser', security: :noauth)
           .and_return(true)
         subject
       end
