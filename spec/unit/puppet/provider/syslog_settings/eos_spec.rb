@@ -51,9 +51,6 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
   def logging
     logging = Fixtures[:logging]
     return logging if logging
-    #file = File.join(File.dirname(__FILE__), 'fixture_api_logging.json')
-    #Fixtures[:logging] = JSON.load(File.read(file))
-    #fixture('api_logging', dir: File.dirname(__FILE__))
     fixture('api_logging')
   end
 
@@ -91,8 +88,10 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
     describe '.prefetch' do
       let :resources do
         {
-          'settings' => Puppet::Type.type(:syslog_settings) .new(name: 'settings'),
-          'alternative' => Puppet::Type.type(:syslog_settings) .new(name: 'alternative')
+          'settings' => Puppet::Type.type(:syslog_settings)
+                                    .new(name: 'settings'),
+          'alternative' => Puppet::Type.type(:syslog_settings)
+                                       .new(name: 'alternative')
         }
       end
       subject { described_class.prefetch(resources) }
