@@ -48,8 +48,6 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
   def logging
     logging = Fixtures[:logging]
     return logging if logging
-    #file = File.join(File.dirname(__FILE__), 'fixture_api_logging.json')
-    #Fixtures[:logging] = JSON.load(File.read(file))
     fixture('api_logging')
   end
 
@@ -93,12 +91,6 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
       end
 
       subject { described_class.prefetch(resources) }
-
-      #it 'resource providers are absent prior to calling .prefetch' do
-      #  resources.values.each do |rsrc|
-      #    expect(rsrc.provider.enable).to eq(:absent)
-      #  end
-      #end
 
       it 'sets the provider instance of the managed resource' do
         subject
