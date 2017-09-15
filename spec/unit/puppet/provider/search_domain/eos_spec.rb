@@ -77,7 +77,9 @@ describe Puppet::Type.type(:search_domain).provider(:eos) do
       end
 
       context "search_domain { 'settings': }" do
-        subject { described_class.instances.find { |p| p.name == 'arista.net' } }
+        subject do
+          described_class.instances.find { |p| p.name == 'arista.net' }
+        end
 
         include_examples 'provider resource methods',
                          name: 'arista.net'

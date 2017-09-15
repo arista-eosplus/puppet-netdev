@@ -113,7 +113,8 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
         expect(resources['settings'].provider.name).to eq 'settings'
         expect(resources['settings'].provider.exists?).to be_truthy
         expect(resources['settings'].provider.authenticate).to eq :false
-        expect(resources['settings'].provider.source_interface).to eq 'Loopback0'
+        expect(resources['settings'].provider.source_interface)
+          .to eq 'Loopback0'
         expect(resources['settings'].provider.trusted_key).to eq ['1,5-70']
       end
 
@@ -161,7 +162,8 @@ describe Puppet::Type.type(:ntp_config).provider(:eos) do
 
     describe '#trusted_key=(val)' do
       it 'updates trusted_key with value "6"' do
-        expect(api).to receive(:set_trusted_key).once.ordered.with(default: true)
+        expect(api).to receive(:set_trusted_key).once.ordered
+                                                .with(default: true)
         expect(api).to receive(:set_trusted_key).once.ordered.with(value: 6)
         provider.trusted_key = [6]
         expect(provider.trusted_key).to eq([6])

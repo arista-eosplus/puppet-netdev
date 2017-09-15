@@ -94,9 +94,9 @@ describe Puppet::Type.type(:network_dns).provider(:eos) do
       let :resources do
         {
           'settings' => Puppet::Type.type(:network_dns)
-            .new(name: 'settings'),
+                                    .new(name: 'settings'),
           'alternative' => Puppet::Type.type(:network_dns)
-            .new(name: 'alternative')
+                                       .new(name: 'alternative')
         }
       end
 

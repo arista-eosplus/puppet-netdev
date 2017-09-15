@@ -51,11 +51,11 @@ Puppet::Type.type(:network_trunk).provide(:eos) do
     @property_hash[:untagged_vlan] = val
   end
 
-  def encapsulation=(val)
+  def encapsulation=(_val)
     not_supported 'encapsulation'
   end
 
-  def pruned_vlans=(val)
+  def pruned_vlans=(_val)
     not_supported 'pruned_vlans'
   end
 

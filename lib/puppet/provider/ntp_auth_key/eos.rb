@@ -21,7 +21,7 @@ Puppet::Type.type(:ntp_auth_key).provide(:eos) do
     :algorithm,
     :mode,
     :password
-  ]
+  ].freeze
 
   # Mix in the api as instance methods
   include PuppetX::NetDev::EosApi

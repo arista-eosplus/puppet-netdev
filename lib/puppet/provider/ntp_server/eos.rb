@@ -24,7 +24,7 @@ Puppet::Type.type(:ntp_server).provide(:eos) do
     :minpoll,
     :source_interface,
     :vrf
-  ]
+  ].freeze
 
   # Mix in the api as instance methods
   include PuppetX::NetDev::EosApi

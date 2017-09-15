@@ -14,8 +14,8 @@ Puppet::Type.type(:radius_server_group).provide(:eos) do
   confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
   confine feature: :rbeapi
 
-  DEFAULT_RADIUS_AUTH_PORT = '1812'
-  DEFAULT_RADIUS_ACCT_PORT = '1813'
+  DEFAULT_RADIUS_AUTH_PORT = '1812'.freeze
+  DEFAULT_RADIUS_ACCT_PORT = '1813'.freeze
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
@@ -32,7 +32,7 @@ Puppet::Type.type(:radius_server_group).provide(:eos) do
       next unless attrs[:type] == 'radius'
       provider_hash = { name: name, ensure: :present }
       provider_hash[:servers] = attrs[:servers].map { |srv| server_name(srv) }
-      Puppet.debug("#{provider_hash}")
+      Puppet.debug("Provider_hash: #{provider_hash}")
       arry << new(provider_hash)
     end
   end

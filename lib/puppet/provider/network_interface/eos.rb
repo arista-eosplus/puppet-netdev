@@ -60,7 +60,7 @@ Puppet::Type.type(:network_interface).provide(:eos) do
     @property_hash[:description] = val
   end
 
-  def mtu=(val)
+  def mtu=(_val)
     not_supported 'mtu'
   end
 

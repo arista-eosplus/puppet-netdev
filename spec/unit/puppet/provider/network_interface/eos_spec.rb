@@ -59,7 +59,7 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
 
   before :each do
     allow(described_class.node).to receive(:api).with('interfaces')
-      .and_return(api)
+                                                .and_return(api)
     allow(provider.node).to receive(:api).with('interfaces').and_return(api)
   end
 
@@ -96,9 +96,9 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
       let :resources do
         {
           'Ethernet1' => Puppet::Type.type(:network_interface)
-            .new(name: 'Ethernet1'),
+                                     .new(name: 'Ethernet1'),
           'Ethernet2' => Puppet::Type.type(:network_interface)
-            .new(name: 'Ethernet2')
+                                     .new(name: 'Ethernet2')
         }
       end
       subject { described_class.prefetch(resources) }
@@ -114,7 +114,8 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
 
       it 'sets the provider instance of the managed resource' do
         subject
-        expect(resources['Ethernet1'].provider.description).to eq('test interface')
+        expect(resources['Ethernet1'].provider.description)
+          .to eq('test interface')
         expect(resources['Ethernet1'].provider.enable).to eq :true
         expect(resources['Ethernet1'].provider.speed).to eq '100g'
         expect(resources['Ethernet1'].provider.duplex).to eq :full
@@ -166,7 +167,7 @@ describe Puppet::Type.type(:network_interface).provider(:eos) do
 
     describe '#enable=(value)' do
       let(:name) { 'Ethernet1' }
-      [:true, :false].each do |val|
+      %i[true false].each do |val|
         it 'updates enable in the provider' do
           value = val == :false
           expect(api).to receive(:set_shutdown).with(name, value: value)
