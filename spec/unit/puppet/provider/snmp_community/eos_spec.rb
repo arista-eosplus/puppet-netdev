@@ -179,7 +179,8 @@ describe Puppet::Type.type(:snmp_community).provider(:eos) do
 
     describe '#group=(value)' do
       it 'updates group in the provider' do
-        expect(api).to receive(:set_community_access).with(resource[:name], 'rw')
+        expect(api).to receive(:set_community_access).with(resource[:name],
+                                                           'rw')
         provider.group = :rw
         expect(provider.group).to eq(:rw)
       end
