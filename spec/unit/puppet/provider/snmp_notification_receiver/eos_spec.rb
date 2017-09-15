@@ -56,10 +56,6 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
   let(:api) { double('snmp') }
 
   before :each do
-    #allow(described_class.node).to receive(:api).with('snmp',
-    #                                                  { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
-    #allow(provider.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev',
-    #                                                     namespace: 'Rbeapi::Netdev' }).and_return(api)
     allow(described_class.node).to receive(:api).with('snmp').and_return(api)
     allow(provider.node).to receive(:api).with('snmp').and_return(api)
     allow(api).to receive(:get).
