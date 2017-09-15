@@ -40,7 +40,7 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
       ensure: :present,
       name: 'Port-Channel1',
       mode: :active,
-      interfaces: %w(Ethernet1 Ethernet2),
+      interfaces: %w[Ethernet1 Ethernet2],
       minimum_links: 2,
       provider: described_class.name
     }
@@ -59,7 +59,7 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
 
   before :each do
     allow(described_class.node).to receive(:api).with('interfaces')
-      .and_return(api)
+                                                .and_return(api)
     allow(provider.node).to receive(:api).with('interfaces').and_return(api)
   end
 
@@ -81,13 +81,15 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
       end
 
       context "port_channel { 'Port-Channel1': }" do
-        subject { described_class.instances.find { |p| p.name == 'Port-Channel1' } }
+        subject do
+          described_class.instances.find { |p| p.name == 'Port-Channel1' }
+        end
 
         include_examples 'provider resource methods',
                          ensure: :present,
                          name: 'Port-Channel1',
                          mode: :disabled,
-                         interfaces: %w(Ethernet1 Ethernet2),
+                         interfaces: %w[Ethernet1 Ethernet2],
                          minimum_links: '2'
       end
     end
@@ -96,9 +98,9 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
       let :resources do
         {
           'Port-Channel1' => Puppet::Type.type(:port_channel)
-            .new(name: 'Port-Channel1'),
+                                         .new(name: 'Port-Channel1'),
           'Port-Channel5' => Puppet::Type.type(:port_channel)
-            .new(name: 'Port-Channel5')
+                                         .new(name: 'Port-Channel5')
         }
       end
 
@@ -117,7 +119,8 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
         expect(resources['Port-Channel1'].provider.name).to eq 'Port-Channel1'
         expect(resources['Port-Channel1'].provider.exists?).to be_truthy
         expect(resources['Port-Channel1'].provider.mode).to eq :disabled
-        expect(resources['Port-Channel1'].provider.interfaces).to eq %w(Ethernet1 Ethernet2)
+        expect(resources['Port-Channel1'].provider.interfaces)
+          .to eq %w[Ethernet1 Ethernet2]
         expect(resources['Port-Channel1'].provider.minimum_links).to eq '2'
       end
 
@@ -193,7 +196,7 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
     describe '#mode=(value)' do
       let(:name) { resource[:name] }
 
-      %w(:active :passive :disabled).each do |value|
+      %w[:active :passive :disabled].each do |value|
         it 'updates mode on the provider' do
           val = value == 'disabled' ? 'on' : value
           expect(api).to receive(:set_lacp_mode).with(name, val)
@@ -204,7 +207,7 @@ describe Puppet::Type.type(:port_channel).provider(:eos) do
     end
 
     describe '#interfaces=(val)' do
-      let(:value) { %w(Ethernet1 Ethernet2 Ethernet3) }
+      let(:value) { %w[Ethernet1 Ethernet2 Ethernet3] }
       it 'updates interfaces on the provider' do
         expect(api).to receive(:set_members) .with(resource[:name], value)
         provider.interfaces = value

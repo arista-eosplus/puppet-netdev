@@ -77,7 +77,9 @@ describe Puppet::Type.type(:domain_name).provider(:eos) do
       end
 
       context "domain_name { 'settings': }" do
-        subject { described_class.instances.find { |p| p.name == 'arista.com' } }
+        subject do
+          described_class.instances.find { |p| p.name == 'arista.com' }
+        end
 
         include_examples 'provider resource methods',
                          name: 'arista.com'
@@ -87,8 +89,10 @@ describe Puppet::Type.type(:domain_name).provider(:eos) do
     describe '.prefetch' do
       let :resources do
         {
-          'arista.com' => Puppet::Type.type(:domain_name).new(name: 'arista.com'),
-          'arista.net' => Puppet::Type.type(:domain_name).new(name: 'arista.net')
+          'arista.com' => Puppet::Type.type(:domain_name)
+                                      .new(name: 'arista.com'),
+          'arista.net' => Puppet::Type.type(:domain_name)
+                                      .new(name: 'arista.net')
         }
       end
 
