@@ -41,8 +41,6 @@ Puppet::Type.type(:snmp_notification_receiver).provide(:eos) do
       provider_hash[:type] = rcvr[:type]
       provider_hash[:version] = rcvr[:version]
       provider_hash[:vrf] = rcvr[:vrf] ? rcvr[:vrf] : :default
-      #provider_hash[:security] = rcvr[:security]
-      #provider_hash[:source_interface] = rcvr[:source_interface]
       new(provider_hash)
     end
   end
