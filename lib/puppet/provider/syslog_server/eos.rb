@@ -35,15 +35,15 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
     @property_hash[:ensure] == :present
   end
 
-  def severity_level=(val)
+  def severity_level=(_val)
     not_supported 'severity_level'
   end
 
-  def vrf=(val)
+  def vrf=(_val)
     not_support 'vrf'
   end
 
-  def source_interface=(val)
+  def source_interface=(_val)
     not_suppported 'source_interface'
   end
 

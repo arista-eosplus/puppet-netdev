@@ -39,7 +39,7 @@ Puppet::Type.type(:radius_global).provide(:eos) do
     @flush_retransmit = false
   end
 
-  def enable=(value)
+  def enable=(_value)
     not_supported 'enable'
   end
 

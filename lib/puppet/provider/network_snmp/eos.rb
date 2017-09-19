@@ -30,7 +30,7 @@ Puppet::Type.type(:network_snmp).provide(:eos) do
     [new(provider_hash)]
   end
 
-  def enable=(value)
+  def enable=(_value)
     not_supported 'enable'
   end
 

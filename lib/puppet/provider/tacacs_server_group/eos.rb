@@ -14,7 +14,7 @@ Puppet::Type.type(:tacacs_server_group).provide(:eos) do
   confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
   confine feature: :rbeapi
 
-  DEFAULT_TACACS_PORT = '49'
+  DEFAULT_TACACS_PORT = '49'.freeze
 
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
@@ -31,7 +31,7 @@ Puppet::Type.type(:tacacs_server_group).provide(:eos) do
       next unless attrs[:type] == 'tacacs+'
       provider_hash = { name: name, ensure: :present }
       provider_hash[:servers] = attrs[:servers].map { |srv| server_name(srv) }
-      Puppet.debug("#{provider_hash}")
+      Puppet.debug("provider: #{provider_hash}")
       arry << new(provider_hash)
     end
   end

@@ -36,7 +36,7 @@ Puppet::Type.type(:syslog_settings).provide(:eos) do
     @property_hash[:enable] = value
   end
 
-  def time_stamp_units=(value)
+  def time_stamp_units=(_value)
     not_supported 'time_stamp_units'
   end
 

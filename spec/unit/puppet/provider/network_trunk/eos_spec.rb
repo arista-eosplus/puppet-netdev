@@ -98,9 +98,9 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
       let :resources do
         {
           'Ethernet1' => Puppet::Type.type(:network_trunk)
-            .new(name: 'Ethernet1'),
+                                     .new(name: 'Ethernet1'),
           'Ethernet2' => Puppet::Type.type(:network_trunk)
-            .new(name: 'Ethernet2')
+                                     .new(name: 'Ethernet2')
         }
       end
 
@@ -194,7 +194,7 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
     end
 
     describe '#mode=(val)' do
-      %w(access trunk).each do |value|
+      %w[access trunk].each do |value|
         let(:value) { value }
 
         it 'updates mode in the provider' do
@@ -206,7 +206,7 @@ describe Puppet::Type.type(:network_trunk).provider(:eos) do
     end
 
     describe '#tagged_vlans=(val)' do
-      let(:vlans) { %w(1 10 100 1000) }
+      let(:vlans) { %w[1 10 100 1000] }
 
       it 'updates tagged_vlans in the provider' do
         expect(api).to receive(:set_trunk_allowed_vlans).with(resource[:name],

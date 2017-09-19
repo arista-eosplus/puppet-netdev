@@ -93,9 +93,9 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
       let :resources do
         {
           'settings' => Puppet::Type.type(:network_snmp)
-            .new(name: 'settings'),
+                                    .new(name: 'settings'),
           'alternative' => Puppet::Type.type(:network_snmp)
-            .new(name: 'alternative')
+                                       .new(name: 'alternative')
         }
       end
 
@@ -160,23 +160,6 @@ describe Puppet::Type.type(:network_snmp).provider(:eos) do
         provider.location = 'foo'
         expect(provider.location).to eq('foo')
       end
-    end
-
-    describe '#enable=(value)' do
-      # enable is not_supported on EOS.  SNMP is always enabled
-      #let(:vid) { resource[:name] }
-
-      #it 'updates enable with value :true' do
-      #  expect(api).to receive(:set_enable).with(value: true)
-      #  provider.enable = :true
-      #  expect(provider.enable).to eq(:true)
-      #end
-
-      #it 'updates enable with value :false' do
-      #  expect(api).to receive(:set_enable).with(value: false)
-      #  provider.enable = :false
-      #  expect(provider.enable).to eq(:false)
-      #end
     end
   end
 end

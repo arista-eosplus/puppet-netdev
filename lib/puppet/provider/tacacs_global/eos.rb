@@ -37,7 +37,7 @@ Puppet::Type.type(:tacacs_global).provide(:eos) do
     @flush_timeout = false
   end
 
-  def enable=(value)
+  def enable=(_value)
     not_supported 'enable'
   end
 
@@ -56,7 +56,7 @@ Puppet::Type.type(:tacacs_global).provide(:eos) do
     @property_flush[:timeout] = value
   end
 
-  def retransmit_count=(value)
+  def retransmit_count=(_value)
     not_supported 'retransmit_count'
   end
 
