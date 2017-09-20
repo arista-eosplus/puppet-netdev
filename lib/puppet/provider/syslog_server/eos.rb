@@ -25,7 +25,9 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
 
   def self.instances
     result = node.api('logging').get
-    result[:hosts].each_with_object([]) do |host, arry|
+    require 'pry'
+    #binding.pry
+    result[:hosts].each_with_object([]) do |(host, attr), arry|
       provider_hash = { name: host, ensure: :present }
       arry << new(provider_hash)
     end

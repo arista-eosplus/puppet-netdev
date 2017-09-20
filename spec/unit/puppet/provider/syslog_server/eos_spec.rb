@@ -35,7 +35,7 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
   # Puppet RAL memoized methods
   let(:resource) do
     resource_hash = {
-      name: '1.2.3.4',
+      name: '192.0.2.4',
       provider: described_class.name
     }
     Puppet::Type.type(:syslog_server).new(resource_hash)
@@ -66,27 +66,27 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
       it { is_expected.to be_an Array }
 
       it 'has one instance' do
-        expect(subject.size).to eq(1)
+        expect(subject.size).to eq(5)
       end
 
-      it 'has an instance for 1.2.3.4' do
-        instance = subject.find { |p| p.name == '1.2.3.4' }
+      it 'has an instance for 192.0.2.4' do
+        instance = subject.find { |p| p.name == '192.0.2.4' }
         expect(instance).to be_a described_class
       end
 
-      context 'syslog_server { 1.2.3.4: }' do
-        subject { described_class.instances.find { |p| p.name == '1.2.3.4' } }
+      context 'syslog_server { 192.0.2.4: }' do
+        subject { described_class.instances.find { |p| p.name == '192.0.2.4' } }
 
         include_examples 'provider resource methods',
-                         name: '1.2.3.4'
+                         name: '192.0.2.4'
       end
     end
 
     describe '.prefetch' do
       let :resources do
         {
-          '1.2.3.4' => Puppet::Type.type(:syslog_server) .new(name: '1.2.3.4'),
-          '5.6.7.8' => Puppet::Type.type(:syslog_server) .new(name: '5.6.7.8')
+          '192.0.2.4' => Puppet::Type.type(:syslog_server) .new(name: '192.0.2.4'),
+          '192.0.2.9' => Puppet::Type.type(:syslog_server) .new(name: '192.0.2.9')
         }
       end
 
@@ -94,14 +94,14 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
 
       it 'sets the provider instance of the managed resource' do
         subject
-        expect(resources['1.2.3.4'].provider.name).to eq('1.2.3.4')
-        expect(resources['1.2.3.4'].provider.exists?).to be_truthy
+        expect(resources['192.0.2.4'].provider.name).to eq('192.0.2.4')
+        expect(resources['192.0.2.4'].provider.exists?).to be_truthy
       end
 
       it 'does not set the provider instance of the unmanaged resource' do
         subject
-        expect(resources['5.6.7.8'].provider.name).to eq('5.6.7.8')
-        expect(resources['5.6.7.8'].provider.exists?).to be_falsey
+        expect(resources['192.0.2.9'].provider.name).to eq('192.0.2.9')
+        expect(resources['192.0.2.9'].provider.exists?).to be_falsey
       end
     end
   end
