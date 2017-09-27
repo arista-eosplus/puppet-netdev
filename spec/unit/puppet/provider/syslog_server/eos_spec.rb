@@ -36,6 +36,8 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
   let(:resource) do
     resource_hash = {
       name: '192.0.2.4',
+      port: 514,
+      vrf: 'blue',
       provider: described_class.name
     }
     Puppet::Type.type(:syslog_server).new(resource_hash)
@@ -85,8 +87,10 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
     describe '.prefetch' do
       let :resources do
         {
-          '192.0.2.4' => Puppet::Type.type(:syslog_server) .new(name: '192.0.2.4'),
-          '192.0.2.9' => Puppet::Type.type(:syslog_server) .new(name: '192.0.2.9')
+          '192.0.2.4' => Puppet::Type.type(:syslog_server)
+                                     .new(name: '192.0.2.4'),
+          '192.0.2.9' => Puppet::Type.type(:syslog_server)
+                                     .new(name: '192.0.2.9')
         }
       end
 
@@ -125,17 +129,80 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
 
     describe '#create' do
       it 'sets ensure to :present' do
-        expect(api).to receive(:add_host).with(resource[:name])
+        allow(api).to receive(:add_host).with(resource[:name])
         provider.create
+        expect(api).to receive(:add_host).with(resource[:name],
+                                               :ensure => :present,
+                                               :vrf => 'blue',
+                                               :port => 514)
+        provider.flush
         expect(provider.ensure).to eq(:present)
       end
     end
 
     describe '#destroy' do
       it 'sets ensure to :absent' do
-        expect(api).to receive(:remove_host).with(resource[:name])
+        allow(api).to receive(:remove_host)
         provider.destroy
+        expect(api).to receive(:remove_host).with(resource[:name],
+                                                  :ensure => :absent)
+        provider.flush
         expect(provider.ensure).to eq(:absent)
+      end
+    end
+
+    describe '#flush' do
+      before :each do
+        allow(api).to receive(:add_host)
+        allow(api).to receive(:add_host).with(resource[:name])
+        allow(api).to receive(:remove_host).with(resource[:name])
+      end
+
+      it 'sets the port' do
+        provider.port = 556
+        provider.flush
+        expect(provider.port).to eq(556)
+      end
+
+      it 'sets the vrf' do
+        provider.vrf = 'blue'
+        provider.flush
+        expect(provider.vrf).to eq('blue')
+      end
+    end
+
+    describe '#port' do
+      it 'sets the port' do
+        expect(api).to receive(:add_host).with(resource[:name], :port => 555)
+        provider.port = 555
+        provider.flush
+        expect(provider.port).to eq(555)
+      end
+    end
+
+    describe '#vrf' do
+      it 'sets the VRF' do
+        expect(api).to receive(:add_host).with(resource[:name],
+                                               :vrf => 'blue')
+        provider.vrf = 'blue'
+        provider.flush
+        expect(provider.vrf).to eq('blue')
+      end
+    end
+
+    describe '#severity_level' do
+      it 'is NOT supported' do
+        expect(Puppet).to receive(:notice)
+          .with('Parameter[severity_level] not supported on EOS platforms')
+        provider.severity_level = 3
+      end
+    end
+
+    describe '#source_interface' do
+      it 'is NOT supported' do
+        expect(Puppet).to receive(:notice)
+          .with('Parameter[source_interface] not supported on EOS platforms')
+        provider.source_interface = 'Management1'
       end
     end
   end

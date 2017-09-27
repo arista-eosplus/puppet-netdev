@@ -14,7 +14,7 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
   confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
   confine feature: :rbeapi
 
-  # Create methods that set the @property_hash for the #flush method
+  # Create getter methods that set the @property_hash for the #flush method
   mk_resource_methods
 
   # Mix in the api as instance methods
@@ -23,12 +23,17 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
   # Mix in the api as class methods
   extend PuppetX::NetDev::EosApi
 
+  def initialize(value = {})
+    super(value)
+    @property_flush = {}
+  end
+
   def self.instances
     result = node.api('logging').get
-    require 'pry'
-    #binding.pry
     result[:hosts].each_with_object([]) do |(host, attr), arry|
       provider_hash = { name: host, ensure: :present }
+      provider_hash[:port] = attr[:port] if attr[:port]
+      provider_hash[:vrf] = attr[:vrf] if attr[:vrf]
       arry << new(provider_hash)
     end
   end
@@ -37,25 +42,45 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
     @property_hash[:ensure] == :present
   end
 
-  def severity_level=(_val)
+  def port=(value)
+    @property_flush[:port] = value
+  end
+
+  def severity_level=(_value)
     not_supported 'severity_level'
   end
 
-  def vrf=(_val)
-    not_support 'vrf'
+  def vrf=(value)
+    @property_flush[:vrf] = value
   end
 
-  def source_interface=(_val)
-    not_suppported 'source_interface'
+  def source_interface=(_value)
+    not_supported 'source_interface'
   end
 
   def create
-    node.api('logging').add_host(resource[:name])
-    @property_hash = { name: resource[:name], ensure: :present }
+    @property_flush[:ensure] = :present
+    @property_flush[:vrf] = @resource[:vrf]
+    @property_flush[:port] = @resource[:port]
   end
 
   def destroy
-    node.api('logging').remove_host(resource[:name])
-    @property_hash = { name: resource[:name], ensure: :absent }
+    @property_flush[:ensure] = :absent
+  end
+
+  def flush
+    api = node.api('logging')
+    opts = @property_hash.merge(@property_flush)
+    if @property_flush[:ensure] == :absent
+      api.remove_host(resource[:name], opts)
+      @property_hash = { name: resource[:name], ensure: :absent }
+      return
+    end
+
+    api.add_host(resource[:name], opts)
+
+    @property_hash = { name: resource[:name], ensure: :present }
+    @property_hash[:vrf] = opts[:vrf]
+    @property_hash[:port] = opts[:port]
   end
 end
