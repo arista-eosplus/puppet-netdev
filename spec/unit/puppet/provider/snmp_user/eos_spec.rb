@@ -52,7 +52,6 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
 
   let(:resource) { type.new(resource_hash) }
   let(:provider) { described_class.new(resource) }
-  #let(:provider) { resource.provider }
 
   let(:api) { double('snmp') }
 
