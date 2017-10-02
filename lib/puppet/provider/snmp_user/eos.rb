@@ -14,6 +14,8 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
   confine operatingsystem: [:AristaEOS] unless ENV['RBEAPI_CONNECTION']
   confine feature: :rbeapi
 
+  PRIV_MODE = { :aes => :aes128, :des => :des }.freeze
+
   # Create methods that set the @property_hash for the #flush method
   mk_resource_methods
 
@@ -24,16 +26,19 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
   extend PuppetX::NetDev::EosApi
 
   def self.instances
-    users = netdev('snmp').snmp_users
-    resource_hash_ary = users.map do |user_hsh|
-      user_hsh.merge(
-        ensure: :present,
-        roles: [*user_hsh[:roles]],
-        name: namevar(user_hsh)
-      )
+    result = node.api('snmp').get
+    result[:users].map do |user|
+      provider_hash = { name: namevar(user), ensure: :present }
+      provider_hash[:roles] = [user[:group]]
+      provider_hash[:version] = user[:version]
+      provider_hash[:engine_id] = user[:engine_id]
+      provider_hash[:auth] = user[:auth_mode] if user[:auth_mode]
+      # Type indicates Cleartext password. We only have encrypted
+      provider_hash[:password] = user[:auth_pass] if user[:auth_pass]
+      provider_hash[:privacy] = PRIV_MODE[user[:priv_mode]] if user[:priv_mode]
+      provider_hash[:private_key] = user[:priv_pass] if user[:priv_pass]
+      new(provider_hash)
     end
-
-    resource_hash_ary.map { |rsrc_hsh| new(rsrc_hsh) }
   end
 
   ##
@@ -79,19 +84,14 @@ Puppet::Type.type(:snmp_user).provide(:eos) do
       version: version,
       ensure: :absent
     }
+    @property_flush[:ensure] = :absent
   end
 
   def flush
     new_property_hash = @property_hash.merge(@property_flush)
     new_property_hash[:name] = name.split(':').first
 
-    case new_property_hash[:ensure]
-    when :absent, 'absent'
-      update = netdev('snmp').snmp_user_destroy(new_property_hash)
-    else
-      update = netdev('snmp').snmp_user_set(new_property_hash)
-    end
-
-    @property_hash = new_property_hash.merge(update)
+    fail('Failed to configure user') unless
+    node.api('snmp').set_user(new_property_hash)
   end
 end

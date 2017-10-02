@@ -1,7 +1,36 @@
 # encoding: utf-8
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'spec_helper'
-
 include FixtureHelpers
 
 describe Puppet::Type.type(:snmp_user).provider(:eos) do
@@ -33,16 +62,27 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   end
 
   before :each do
-    allow(described_class.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
-    allow(provider.node).to receive(:api).with('snmp', { path: 'rbeapi/netdev', namespace: 'Rbeapi::Netdev' }).and_return(api)
+    allow(described_class.node).to receive(:api).with('snmp').and_return(api)
+    allow(provider.node).to receive(:api).with('snmp').and_return(api)
   end
 
   context 'class methods' do
-    before { allow(api).to receive(:snmp_users).and_return(snmp) }
+    before { allow(api).to receive(:get).and_return(snmp) }
 
     describe '.instances' do
       subject { described_class.instances }
 
+      it 'has a known property_hash' do
+        expect(described_class.instances[0].instance_variable_get("@property_hash")).to eq( {
+          :name=>"jeff:v3",
+          :ensure=>:present,
+          :auth => :sha,
+          :engine_id=>"f5717f00420008177800",
+          :privacy => :aes128,
+          :roles=>["developers"],
+          :version=>:v3,
+        } )
+      end
       it { is_expected.to be_an Array }
       it 'each provider has ensure=present' do
         subject.each { |p| expect(p.ensure).to eq(:present) }
@@ -59,7 +99,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
     end
 
     before :each do
-      allow(api).to receive(:snmp_user_set)
+      allow(api).to receive(:set_user)
         .and_return(password: 'foobar')
     end
 
@@ -69,8 +109,8 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
         provider.flush
       end
 
-      it 'calls snmp_user_set' do
-        expect(api).to receive(:snmp_user_set)
+      it 'calls set_user' do
+        expect(api).to receive(:set_user)
           .and_return(password: 'foobar')
         subject
       end
@@ -81,7 +121,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
         end
 
         it 'splits the name on colon' do
-          expect(api).to receive(:snmp_user_set)
+          expect(api).to receive(:set_user)
             .with(include(name: 'jeff', version: :v3))
             .and_return(password: 'foobar')
           subject
@@ -96,12 +136,12 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
       end
 
       let(:expected) do
-        { name: 'jeff', roles: %w(developers), version: :v3 }
+          { name: 'jeff', roles: %w(developers), version: :v3, ensure: :absent }
       end
 
       context 'when the resource name matches the title' do
-        it 'calls snmp_user_destroy' do
-          expect(api).to receive(:snmp_user_destroy)
+        it 'calls set_user to destroy' do
+          expect(api).to receive(:set_user)
             .with(include(expected)).and_return({})
           subject
         end
@@ -113,7 +153,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
         end
 
         it 'splits the name on colon' do
-          expect(api).to receive(:snmp_user_destroy)
+          expect(api).to receive(:set_user)
             .with(include(expected))
             .and_return({})
           subject
@@ -151,7 +191,7 @@ describe Puppet::Type.type(:snmp_user).provider(:eos) do
   it_behaves_like 'provider exists?'
 
   describe '.prefetch(resources)' do
-    before { allow(api).to receive(:snmp_users).and_return(snmp) }
+    before { allow(api).to receive(:get).and_return(snmp) }
 
     let(:matching_resource) do
       {
