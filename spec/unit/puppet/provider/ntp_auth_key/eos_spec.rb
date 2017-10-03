@@ -160,6 +160,14 @@ describe Puppet::Type.type(:ntp_auth_key).provider(:eos) do
         expect { provider.flush }
           .to raise_error(Puppet::Error, 'Unable to set Ntp_auth_key[1]')
       end
+
+      it 'raises an error when passed an invalid algorithm' do
+        resource[:ensure] = :present
+        resource[:algorithm] = 'sha256'
+        provider.create
+        expect { provider.flush }
+          .to raise_error(Puppet::Error, 'Unsupported algorithm in Ntp_auth_key[1]')
+      end
     end
 
     describe '#destroy' do

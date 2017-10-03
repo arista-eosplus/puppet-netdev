@@ -66,6 +66,10 @@ Puppet::Type.type(:ntp_auth_key).provide(:eos) do
       @property_hash[prop] = @resource[prop]
     end
 
+    unless ["md5", "sha1"].include? opts[:algorithm]
+      raise Puppet::Error, "Unsupported algorithm in #{resource}"
+    end
+
     output = node.api('ntp').set_authentication_key(opts)
     if output == true
       @property_hash[:name] = resource[:name]
