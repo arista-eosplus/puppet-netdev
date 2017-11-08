@@ -28,14 +28,10 @@ Puppet::Type.type(:syslog_server).provide(:eos) do
 
   def self.instances
     result = node.api('logging').get
-    # result[:hosts].each_with_object([]) do |host, arry|
     arry = []
     result[:hosts].each do |attrs|
-      require 'pry'
-      # binding.pry
       provider_hash = { name: namevar(attrs), ensure: :present }
       provider_hash.merge!(attrs)
-      # binding.pry
       arry << new(provider_hash)
     end
     arry
