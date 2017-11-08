@@ -1,10 +1,8 @@
-# encoding: utf-8
-
 require 'puppet/type'
 
 begin
   require 'puppet_x/net_dev/eos_api'
-rescue LoadError => detail
+rescue LoadError
   require 'pathname' # JJM WORK_AROUND #14073
   module_base = Pathname.new(__FILE__).dirname
   require module_base + '../../../' + 'puppet_x/net_dev/eos_api'
@@ -27,6 +25,14 @@ Puppet::Type.type(:radius_global).provide(:eos) do
     result = node.api('radius').get
     provider_hash = { name: 'settings' }
     provider_hash.merge!(result[:global])
+    vrfs = []
+    intfs = []
+    result[:global][:source_interface].each do |vrf, intf|
+      vrfs << vrf
+      intfs << intf
+    end
+    provider_hash[:vrf] = vrfs
+    provider_hash[:source_interface] = intfs
     provider_hash[:retransmit_count] = result[:global][:retransmit]
     [new(provider_hash)]
   end
@@ -63,14 +69,37 @@ Puppet::Type.type(:radius_global).provide(:eos) do
     @property_flush[:retransmit_count] = value
   end
 
+  def source_interface=(value)
+    @flush_source_interface = true
+    @property_flush[:source_interface] = value
+  end
+
+  def vrf=(value)
+    @flush_source_interface = true
+    @property_flush[:vrf] = value
+  end
+
   def flush
     api = node.api('radius')
     opts = @property_hash.merge(@property_flush)
-    api.set_global_key(value: opts[:key],
-                       key_format: opts[:key_format]) if @flush_key
+    set_source_interface if @flush_source_interface == true
+    if @flush_key
+      api.set_global_key(value: opts[:key],
+                         key_format: opts[:key_format])
+    end
     api.set_global_timeout(value: opts[:timeout]) if @flush_timeout
-    api.set_global_retransmit(value: opts[:retransmit_count]) if @flush_retransmit
+    if @flush_retransmit
+      api.set_global_retransmit(value: opts[:retransmit_count])
+    end
     # Update the state in the model to reflect the flushed changes
     @property_hash.merge!(@property_flush)
+  end
+
+  def set_source_interface
+    api = node.api('radius')
+    vrfs = @property_flush[:vrf] || @resource[:vrf]
+    ints = @property_flush[:source_interface] || @resource[:source_interface]
+    srcs = Hash[vrfs.zip(ints)]
+    api.set_source_interface(srcs)
   end
 end
