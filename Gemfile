@@ -32,6 +32,7 @@ group :development, :test do
   gem 'redcarpet'
   gem 'rspec', '~> 3.0.0'
   gem 'rspec-mocks', '~> 3.0.0'
+  gem 'semantic_puppet'
   gem 'simplecov', require: false
   gem 'yard'
 end
