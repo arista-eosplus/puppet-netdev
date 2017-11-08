@@ -3,6 +3,10 @@
   :timeout: 7
   :key: 070E234F1F5B4A
   :key_format: 7
+  :source_interface:
+    red: "Ethernet1"
+    default: "Management1"
+    blue: "Ethernet6"
 :servers:
   - :port: 4949
     :vrf: 
