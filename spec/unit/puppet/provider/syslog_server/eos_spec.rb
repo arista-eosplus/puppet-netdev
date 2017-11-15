@@ -84,7 +84,7 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
         subject { described_class.instances.find { |p| p.name == res_name } }
 
         include_examples 'provider resource methods',
-                         name: res_name
+                         name: '192.0.2.2 514 default'
       end
     end
 
