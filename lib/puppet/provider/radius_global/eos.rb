@@ -41,6 +41,7 @@ Puppet::Type.type(:radius_global).provide(:eos) do
     super(resource)
     @property_flush = {}
     @flush_key = false
+    @flush_source_interface = false
     @flush_timeout = false
     @flush_retransmit = false
   end
