@@ -38,7 +38,12 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
   let(:resource) do
     resource_hash = {
       name: 'settings',
+      console: 3,
       enable: :true,
+      monitor: 2,
+      time_stamp_units: 'seconds',
+      source_interface: ['Ethernet6', 'Management1'],
+      vrf: ['blue', 'default'],
       provider: described_class.name
     }
     Puppet::Type.type(:syslog_settings).new(resource_hash)
@@ -81,6 +86,11 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
 
         include_examples 'provider resource methods',
                          name: 'settings',
+                         console: 3,
+                         monitor: 2,
+                         time_stamp_units: 'milliseconds',
+                         source_interface: ['Ethernet6', 'Management1'],
+                         vrf: ['blue', 'default'],
                          enable: :true
       end
     end
@@ -99,6 +109,11 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
       it 'resource providers are absent prior to calling .prefetch' do
         resources.values.each do |rsrc|
           expect(rsrc.provider.enable).to eq(:absent)
+          expect(rsrc.provider.console).to eq(:absent)
+          expect(rsrc.provider.monitor).to eq(:absent)
+          expect(rsrc.provider.time_stamp_units).to eq(:absent)
+          expect(rsrc.provider.source_interface).to eq(:absent)
+          expect(rsrc.provider.vrf).to eq(:absent)
         end
       end
 
@@ -107,6 +122,10 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
         expect(resources['settings'].provider.name).to eq('settings')
         expect(resources['settings'].provider.exists?).to be_truthy
         expect(resources['settings'].provider.enable).to be_truthy
+        expect(resources['settings'].provider.console).to eq(3)
+        expect(resources['settings'].provider.monitor).to eq(2)
+        expect(resources['settings'].provider.time_stamp_units)
+          .to eq('milliseconds')
       end
 
       it 'does not set the provider instance of the unmanaged resource' do
@@ -114,6 +133,13 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
         expect(resources['alternative'].provider.name).to eq('alternative')
         expect(resources['alternative'].provider.exists?).to be_falsey
         expect(resources['alternative'].provider.enable).to eq(:absent)
+        expect(resources['alternative'].provider.console).to eq(:absent)
+        expect(resources['alternative'].provider.monitor).to eq(:absent)
+        expect(resources['alternative'].provider.source_interface)
+          .to eq(:absent)
+        expect(resources['alternative'].provider.vrf).to eq(:absent)
+        expect(resources['alternative'].provider.time_stamp_units)
+          .to eq(:absent)
       end
     end
   end
@@ -146,6 +172,50 @@ describe Puppet::Type.type(:syslog_settings).provider(:eos) do
         expect(api).to receive(:set_enable).with(value: false)
         provider.enable = :false
         expect(provider.enable).to eq(:false)
+      end
+    end
+
+    describe '#set_console=(value)' do
+      it 'updates console in the provider' do
+        expect(api).to receive(:set_console).with(level: 5)
+        provider.console = 5
+        expect(provider.console).to eq(5)
+      end
+    end
+
+    describe '#set_monitor=(value)' do
+      it 'updates monitor in the provider' do
+        expect(api).to receive(:set_monitor).with(level: 7)
+        provider.monitor = 7
+        expect(provider.monitor).to eq(7)
+      end
+    end
+
+    describe '#set_time_stamp_units=(value)' do
+      it 'updates time_stamp_units in the provider' do
+        expect(api).to receive(:set_time_stamp_units).with(units: 'milliseconds')
+        provider.time_stamp_units = 'milliseconds'
+        expect(provider.time_stamp_units).to eq('milliseconds')
+      end
+    end
+
+    describe '#set_source_interface=(value)' do
+      it 'updates source_interface in the provider' do
+        expect(api).to receive(:set_source_interface).with({"default"=>"Management1", "red"=>"Ethernet5"})
+        provider.source_interface = ['Management1', 'Ethernet5']
+        provider.vrf = ['default', 'red']
+        provider.flush
+        expect(provider.source_interface).to eq(['Management1', 'Ethernet5'])
+      end
+    end
+
+    describe '#set_vrf=(value)' do
+      it 'updates vrf in the provider' do
+        expect(api).to receive(:set_source_interface).with({"default"=>"Management1", "blue"=>"Ethernet5"})
+        provider.source_interface = ['Management1', 'Ethernet5']
+        provider.vrf = ['default', 'blue']
+        provider.flush
+        expect(provider.vrf).to eq(['default', 'blue'])
       end
     end
   end
