@@ -42,8 +42,8 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
       key_format: 7,
       timeout: 10,
       retransmit_count: 10,
-      source_interface: ['Ethernet1', 'Management1'],
-      vrf: ['red', 'default'],
+      source_interface: %w[Ethernet1 Management1],
+      vrf: %w[red default],
       provider: described_class.name
     }
     Puppet::Type.type(:radius_global).new(resource_hash)
@@ -105,7 +105,7 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
       subject { described_class.prefetch(resources) }
 
       it 'resource providers are absent prior to calling .prefetch' do
-        resources.values.each do |rsrc|
+        resources.each_value do |rsrc|
           expect(rsrc.provider.key).to eq(:absent)
           expect(rsrc.provider.key_format).to eq(:absent)
           expect(rsrc.provider.timeout).to eq(:absent)
@@ -164,21 +164,25 @@ describe Puppet::Type.type(:radius_global).provider(:eos) do
 
     describe '#set_source_interface=(value)' do
       it 'updates source_interface in the provider' do
-        expect(api).to receive(:set_source_interface).with({"default"=>"Management1", "red"=>"Ethernet5"})
-        provider.source_interface = ['Management1', 'Ethernet5']
-        provider.vrf = ['default', 'red']
+        expect(api).to receive(:set_source_interface).with(
+          'default' => 'Management1', 'red' => 'Ethernet5'
+        )
+        provider.source_interface = %w[Management1 Ethernet5]
+        provider.vrf = %w[default red]
         provider.flush
-        expect(provider.source_interface).to eq(['Management1', 'Ethernet5'])
+        expect(provider.source_interface).to eq(%w[Management1 Ethernet5])
       end
     end
 
     describe '#set_vrf=(value)' do
       it 'updates vrf in the provider' do
-        expect(api).to receive(:set_source_interface).with({"default"=>"Management1", "blue"=>"Ethernet5"})
-        provider.source_interface = ['Management1', 'Ethernet5']
-        provider.vrf = ['default', 'blue']
+        expect(api).to receive(:set_source_interface).with(
+          'default' => 'Management1', 'blue' => 'Ethernet5'
+        )
+        provider.source_interface = %w[Management1 Ethernet5]
+        provider.vrf = %w[default blue]
         provider.flush
-        expect(provider.vrf).to eq(['default', 'blue'])
+        expect(provider.vrf).to eq(%w[default blue])
       end
     end
   end

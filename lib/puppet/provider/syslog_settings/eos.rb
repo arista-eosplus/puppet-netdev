@@ -1,10 +1,8 @@
-# encoding: utf-8
-
 require 'puppet/type'
 
 begin
   require 'puppet_x/net_dev/eos_api'
-rescue LoadError => detail
+rescue LoadError
   require 'pathname' # JJM WORK_AROUND #14073
   module_base = Pathname.new(__FILE__).dirname
   require module_base + '../../../' + 'puppet_x/net_dev/eos_api'
@@ -33,11 +31,11 @@ Puppet::Type.type(:syslog_settings).provide(:eos) do
     vrfs = []
     intfs = []
     result[:source].each do |vrf, intf|
-        vrfs << vrf
-        intfs << intf
+      vrfs << vrf
+      intfs << intf
     end
-    provider_hash.merge!({vrf: vrfs})
-    provider_hash.merge!({source_interface: intfs})
+    provider_hash[:vrf] = vrfs
+    provider_hash[:source_interface] = intfs
     [new(provider_hash)]
   end
 

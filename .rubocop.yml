@@ -8,6 +8,11 @@ AllCops:
 Metrics/CyclomaticComplexity:
   Max: 20
 
+Metrics/BlockLength:
+  Enabled: false
+  Exclude: 
+    - spec/unit/**/*
+
 Metrics/MethodLength:
   Max: 20
 
@@ -32,8 +37,8 @@ Metrics/AbcSize:
 Metrics/ClassLength:
   Max: 130
 
-Metrics/BlockLength:
-  Enabled: False
-
 Lint/UselessAssignment:
   Enabled: False
+
+Lint/BooleanSymbol:
+  Enabled: false
