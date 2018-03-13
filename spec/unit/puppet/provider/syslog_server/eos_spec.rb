@@ -32,16 +32,21 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:syslog_server).provider(:eos) do
+  let(:type) { Puppet::Type.type(:syslog_server) }
+
   # Puppet RAL memoized methods
-  let(:resource) do
-    resource_hash = {
-      name: '1.2.3.4',
-      provider: described_class.name
+  let(:resource_hash) do
+    {
+      name: '192.0.2.2',
+      ensure: :present,
+      port: '514',
+      vrf: 'default'
     }
-    Puppet::Type.type(:syslog_server).new(resource_hash)
   end
 
-  let(:provider) { resource.provider }
+  let(:resource) { type.new(resource_hash) }
+  # let(:provider) { resource.provider }
+  let(:provider) { described_class.new(resource) }
 
   let(:api) { double('logging') }
 
@@ -65,28 +70,33 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
 
       it { is_expected.to be_an Array }
 
-      it 'has one instance' do
-        expect(subject.size).to eq(1)
+      it 'has two instances' do
+        expect(subject.size).to eq(2)
       end
 
-      it 'has an instance for 1.2.3.4' do
-        instance = subject.find { |p| p.name == '1.2.3.4' }
+      it 'has an instance for 192.0.2.2 514 default' do
+        instance = subject.find { |p| p.name == '192.0.2.2 514 default' }
         expect(instance).to be_a described_class
       end
 
-      context 'syslog_server { 1.2.3.4: }' do
-        subject { described_class.instances.find { |p| p.name == '1.2.3.4' } }
+      context 'syslog_server { "192.0.2.2 514 default": }' do
+        let(:res_name) { '192.0.2.2 514 default' }
+        subject { described_class.instances.find { |p| p.name == res_name } }
 
         include_examples 'provider resource methods',
-                         name: '1.2.3.4'
+                         name: '192.0.2.2 514 default'
       end
     end
 
     describe '.prefetch' do
       let :resources do
         {
-          '1.2.3.4' => Puppet::Type.type(:syslog_server) .new(name: '1.2.3.4'),
-          '5.6.7.8' => Puppet::Type.type(:syslog_server) .new(name: '5.6.7.8')
+          '192.0.2.2 514 default' => Puppet::Type.type(:syslog_server) .new(
+            name: '192.0.2.2 514 default'
+          ),
+          '192.0.2.10 514 default' => Puppet::Type.type(:syslog_server) .new(
+            name: '192.0.2.10 514 default'
+          )
         }
       end
 
@@ -94,17 +104,24 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
 
       it 'sets the provider instance of the managed resource' do
         subject
-        expect(resources['1.2.3.4'].provider.name).to eq('1.2.3.4')
-        expect(resources['1.2.3.4'].provider.exists?).to be_truthy
+        expect(resources['192.0.2.2 514 default'].provider.name).to eq(
+          '192.0.2.2 514 default'
+        )
+        expect(resources['192.0.2.2 514 default'].provider.exists?).to be_truthy
       end
 
       it 'does not set the provider instance of the unmanaged resource' do
         subject
-        expect(resources['5.6.7.8'].provider.name).to eq('5.6.7.8')
-        expect(resources['5.6.7.8'].provider.exists?).to be_falsey
+        expect(resources['192.0.2.10 514 default'].provider.name).to eq(
+          '192.0.2.10 514 default'
+        )
+        expect(resources['192.0.2.10 514 default'].provider.exists?)
+          .to be_falsey
       end
     end
   end
+
+  # it_behaves_like 'provider exists?'
 
   context 'resource (instance) methods' do
     describe '#exists?' do
@@ -125,16 +142,23 @@ describe Puppet::Type.type(:syslog_server).provider(:eos) do
 
     describe '#create' do
       it 'sets ensure to :present' do
-        expect(api).to receive(:add_host).with(resource[:name])
+        expect(api).to receive(:add_host).with(
+          resource[:name].split(' ')[0], port: '514', vrf: 'default'
+        )
+                                         .and_return(true)
         provider.create
+        provider.flush
         expect(provider.ensure).to eq(:present)
       end
     end
 
     describe '#destroy' do
       it 'sets ensure to :absent' do
-        expect(api).to receive(:remove_host).with(resource[:name])
+        expect(api).to receive(:remove_host).with(
+          resource[:name].split(' ')[0], port: '514', vrf: 'default'
+        )
         provider.destroy
+        provider.flush
         expect(provider.ensure).to eq(:absent)
       end
     end

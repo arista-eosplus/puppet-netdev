@@ -4,6 +4,9 @@
   :retransmit: 10
   :key_format: 7
   :key: 044B0A151C36435C0D
+  :source_interface:
+    red: "Ethernet1"
+    default: "Management1"
 :servers:
   - !ruby/sym auth_port: 1812
     !ruby/sym acct_port: 1813

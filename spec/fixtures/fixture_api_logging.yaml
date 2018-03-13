@@ -1,5 +1,17 @@
 ---
 :enable: true
+:console: 3
+:monitor: 2
+:time_stamp_units: "milliseconds"
+:source:
+  "blue": "Ethernet6"
+  "default": "Management1"
 :hosts:
-  - 1.2.3.4
-
+  - :address: 192.0.2.2
+    :vrf: default
+    :port: '514'
+    :protocol: udp
+  - :address: 192.0.2.2
+    :vrf: red
+    :port: '514'
+    :protocol: udp

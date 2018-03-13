@@ -41,6 +41,8 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
       key: '070E234F1F5B4A',
       key_format: 7,
       timeout: 30,
+      source_interface: %w[Ethernet1 Management1],
+      vrf: %w[red default],
       provider: described_class.name
     }
     Puppet::Type.type(:tacacs_global).new(resource_hash)
@@ -95,6 +97,7 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
       before :each do
         allow(api).to receive(:set_global_key).and_return(true)
         allow(api).to receive(:set_global_timeout).and_return(true)
+        allow(api).to receive(:set_source_interface).and_return(true)
       end
 
       context 'after updating the key' do
@@ -128,6 +131,33 @@ describe Puppet::Type.type(:tacacs_global).provider(:eos) do
         it 'calls #set_timeout to configure the timeout' do
           expect(api).to receive(:set_global_timeout)
             .with(include(value: 120))
+          subject
+        end
+      end
+
+      context 'after updating the source_interface' do
+        subject do
+          provider.source_interface = %w[Ethernet1 Management1]
+          provider.flush
+        end
+
+        it 'calls #set_source_interface to configure the source-interfaces' do
+          expect(api).to receive(:set_source_interface)
+            .with('red' => 'Ethernet1', 'default' => 'Management1')
+          subject
+        end
+      end
+
+      context 'after updating the vrf' do
+        subject do
+          provider.source_interface = %w[Ethernet1 Management1]
+          provider.vrf = %w[blue default]
+          provider.flush
+        end
+
+        it 'calls #set_source_interface to configure the source-interfaces' do
+          expect(api).to receive(:set_source_interface)
+            .with('blue' => 'Ethernet1', 'default' => 'Management1')
           subject
         end
       end
