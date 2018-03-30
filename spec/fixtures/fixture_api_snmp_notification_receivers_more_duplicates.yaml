@@ -130,6 +130,12 @@
   :version: v1
   :username: public
   :port: '8888'
+- :name: 127.0.0.1
+  :vrf: default
+  :type: traps
+  :version: v3
+  :username: public
+  :port: '162'
 :users:
 - :name: puppet931
   :group: puppet_users

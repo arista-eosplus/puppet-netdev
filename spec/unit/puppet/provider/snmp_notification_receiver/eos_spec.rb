@@ -97,11 +97,11 @@ describe Puppet::Type.type(:snmp_notification_receiver).provider(:eos) do
             .and_return(fixed_data)
         end
 
-        it_behaves_like 'provider instances', size: 8
+        it_behaves_like 'provider instances', size: 9
       end
     end
 
-    describe '.prefetch' do
+    describe '.prefetch(resources)' do
       before :each do
         fixed_data = fixture(:api_snmp_notification_receivers_more_duplicates)
         allow(api).to receive(:get)
