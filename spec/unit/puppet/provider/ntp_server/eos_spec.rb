@@ -70,8 +70,6 @@ describe Puppet::Type.type(:ntp_server).provider(:eos) do
       it { is_expected.to be_an Array }
 
       it 'has one instance' do
-        require 'pry'
-        binding.pry
         expect(subject.size).to eq(1)
       end
 
