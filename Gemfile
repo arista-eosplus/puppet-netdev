@@ -21,6 +21,8 @@ group :development do
 end
 
 group :development, :test do
+  # https://tickets.puppetlabs.com/browse/FACT-804
+  gem 'CFPropertyList'
   gem 'metadata-json-lint'
   gem 'pry', require: false
   gem 'pry-doc', require: false
