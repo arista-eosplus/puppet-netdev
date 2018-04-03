@@ -25,6 +25,7 @@ Puppet::Type.type(:domain_name).provide(:eos) do
 
   def self.instances
     result = node.api('dns').get
+    return [] if !result || result.empty?
     provider_hash = { name: result[:domain_name], ensure: :present }
     [new(provider_hash)]
   end
@@ -39,7 +40,7 @@ Puppet::Type.type(:domain_name).provide(:eos) do
   end
 
   def destroy
-    node.api('dns').set_domain_name
+    node.api('dns').set_domain_name(enable: false)
     @property_hash = { name: resource[:name], ensure: :absent }
   end
 end
