@@ -27,7 +27,7 @@ group :development, :test do
   gem 'pry-stack_explorer', require: false
   gem 'puppet-lint'
   gem 'puppetlabs_spec_helper'
-  gem 'rake', '~> 10.1.0', require: false
+  gem 'rake', '~> 12.3.3', require: false
   gem 'rb-readline'
   gem 'redcarpet'
   gem 'rspec', '~> 3.0.0'
